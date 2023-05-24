@@ -15,6 +15,7 @@ ADMIN_IDS = [652015662, 1309387740]
 command_for_ip_info = "cs"
 command_for_site_list = "cms"
 default_site_list_to_check = ["https://www.google.com", "https://openai.com", "https://instagram.com"]
+gtimeout: int = 6
 
 @app.route('/', methods=["POST"])
 def handle_request():
@@ -27,12 +28,19 @@ def handle_request():
 
 
 @bot.message_handler(commands=['start'])
-def say(m):
+def handle_start(m):
     bot.send_message(m.chat.id, "The bot is ready to perform\n"
                                 f"Send command /{command_for_ip_info} followed by the proxy "
                                 "(ip, port) you want to check with ipinfo.io/ip"
                                 f"Send command /{command_for_site_list} followed by the proxy "
                                 f"(ip, port) you want to verify on multiple sites")
+
+@bot.message_handler(commands=['set_timeout'])
+def handle_set_timeout(m):
+    global gtimeout
+    before = f"Timeout before: {gtimeout}"
+    gtimeout = int(m.text[len('set_timeout')+2:])
+    bot.send_message(m.chat.id, f"{before}\nTimeout after: {gtimeout}")
 
 @bot.message_handler(commands=[command_for_ip_info])
 def handle_ip_info_check(m):
@@ -60,13 +68,13 @@ def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_ip_port):
     )
 
 def verify_proxy_on_ipinfo(
-        proxy_ip: str, proxy_port: str, timeout: int = 5
+        proxy_ip: str, proxy_port: str
 ) -> str:
     try:
         proxy_ip_port = f"{proxy_ip}:{proxy_port}"
         t = time.time()
         r = requests.get(
-            "https://ipinfo.io/ip", proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=timeout
+            "https://ipinfo.io/ip", proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=gtimeout
         )
         time_taken = round(time.time() - t, 4)
         if r.status_code == 200:
@@ -117,14 +125,14 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
     )
 
 def verify_proxy_on_site_list(
-        proxy_ip: str, proxy_port: str, site_list: list, timeout: int = 5, delay_between: int = 2
+        proxy_ip: str, proxy_port: str, site_list: list, delay_between: int = 2
 ) -> dict:
     test_results = {}
     proxy_ip_port = f"{proxy_ip}:{proxy_port}"
     for site in site_list:
         try:
             t = time.time()
-            r = requests.get(site, proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=timeout)
+            r = requests.get(site, proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=gtimeout)
             time_taken = round(time.time() - t, 4)
             if r.status_code == 200:
                 test_results[site] = (True, f"The proxy worked.\nr.text: {r.text}\nTime taken: {time_taken}")
