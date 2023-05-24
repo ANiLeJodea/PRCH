@@ -8,6 +8,6 @@ response = requests.get(f"https://api.telegram.org/bot{os.environ['BOT_TOKEN']}/
     'chat_id': LOG_FORUM_ID,
     'top_msg_id': LOG_TOPIC_ID,
     'text': requests.get(f"https://api.telegram.org/bot{os.environ['BOT_TOKEN']}/setwebhook?url="
-                         f"https://{os.environ['REPL_SLUG']}.{os.environ['REPL_OWNER']}.repl.co").text
+                         f"{os.environ['EXTERNAL_URL']}").text
 })
 
