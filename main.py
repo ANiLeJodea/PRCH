@@ -105,7 +105,8 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
             proxy_ip, proxy_port, sites = args_list
             sites_list = [f'https://{s}' for s in sites.split(',')]
         for key, value in verify_proxy_on_site_list(proxy_ip, proxy_port, sites_list).items():
-            text += f"Site {key}::\n{value}\n\n"
+            # if value[0]:
+            text += f"Site {key}::\n{value[1]}\n\n"
     else:
         text = "Please, provide something to check in the correct format."
 
@@ -130,9 +131,10 @@ def verify_proxy_on_site_list(
             else:
                 test_results[site] = (False, "Seems like the proxy didnt work.\n"
                                              f"r.status_code: {r.status_code}\n"
-                                             f"r.text: {r.text}\nTime taken: {time_taken}")
+                                             f"Time taken: {time_taken}")
         except Exception as e:
             test_results[site] = (False, f"Got an exception:\n{e}\n\nException class: {e.__class__}")
+
         time.sleep(delay_between)
 
     return test_results
