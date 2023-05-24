@@ -41,7 +41,7 @@ def handle_ip_info_check(m):
         target=perform_ip_info_check, args=(
             m.chat.id,
             answer_message_id,
-            m.text[len(command_for_site_list) + 2:]
+            m.text[len(command_for_ip_info) + 2:]
         )
     )
     thread.start()
@@ -70,11 +70,13 @@ def verify_proxy_on_ipinfo(
         )
         time_taken = round(time.time() - t, 4)
         if r.status_code == 200:
-            if r.text.strip() == proxy_ip:
+            if r.text == proxy_ip:
                 return f"The proxy worked.\nr.text: {r.text}\nTime taken: {time_taken}"
-            else:
-                return "Seems like IpInfo didnt show the ip of the proxy properly." \
-                       f"\nr.text: {r.text}\nTime taken: {time_taken}"
+            return "Seems like IpInfo didnt show the ip of the proxy properly." \
+                   f"\nr.text: {r.text}\nTime taken: {time_taken}"
+        return "Seems like the proxy didnt work.\n" \
+               f"r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken: {time_taken}"
+
 
     except Exception as e:
         return f"Got the exception:\n{e}\n\nException class: {e.__class__}"
@@ -83,7 +85,7 @@ def verify_proxy_on_ipinfo(
 def handle_site_list_check(m):
     answer_message_id = bot.send_message(m.chat.id, "Trying to verify on a site list...").id
     thread = threading.Thread(
-        target=perform_ip_info_check, args=(
+        target=perform_site_list_check, args=(
             m.chat.id,
             answer_message_id,
             m.text[len(command_for_site_list) + 2:]
@@ -92,17 +94,18 @@ def handle_site_list_check(m):
     thread.start()
 
 def perform_site_list_check(chat_id, id_of_message_to_change, args):
-    args_list = args.split(':')
+    args_list: list = args.split(':')
     args_list_len: int = len(args_list)
-    if args_list_len == 2:
+    if 1 < args_list_len < 4:
         text = "Results:\n"
-        for key, value in verify_proxy_on_site_list(
-                args_list[0], args_list[1], default_site_list_to_check).items():
-            text += f"Site: {key} -> {value}\n"
-    elif args_list_len == 3:
-        proxy_ip, proxy_port, sites = args_list
-        sites_list = sites.split(',')
-        text = verify_proxy_on_site_list(proxy_ip, proxy_port, sites_list)
+        if args_list_len == 2:
+            proxy_ip, proxy_port = args_list
+            sites_list = default_site_list_to_check
+        elif args_list_len == 3:
+            proxy_ip, proxy_port, sites = args_list
+            sites_list = [f'https://{s}' for s in sites.split(',')]
+        for key, value in verify_proxy_on_site_list(proxy_ip, proxy_port, sites_list).items():
+            text += f"Site {key}::\n{value}\n\n"
     else:
         text = "Please, provide something to check in the correct format."
 
@@ -113,7 +116,7 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
     )
 
 def verify_proxy_on_site_list(
-        proxy_ip: str, proxy_port: str, site_list: list, timeout: int = 5, delay_between: int = 3
+        proxy_ip: str, proxy_port: str, site_list: list, timeout: int = 5, delay_between: int = 2
 ) -> dict:
     test_results = {}
     proxy_ip_port = f"{proxy_ip}:{proxy_port}"
@@ -123,9 +126,13 @@ def verify_proxy_on_site_list(
             r = requests.get(site, proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=timeout)
             time_taken = round(time.time() - t, 4)
             if r.status_code == 200:
-                test_results[site] = (True, time_taken)
+                test_results[site] = (True, f"The proxy worked.\nr.text: {r.text}\nTime taken: {time_taken}")
+            else:
+                test_results[site] = (False, "Seems like the proxy didnt work.\n"
+                                             f"r.status_code: {r.status_code}\n"
+                                             f"r.text: {r.text}\nTime taken: {time_taken}")
         except Exception as e:
-            test_results[site] = (False, e)
+            test_results[site] = (False, f"Got an exception:\n{e}\n\nException class: {e.__class__}")
         time.sleep(delay_between)
 
     return test_results
