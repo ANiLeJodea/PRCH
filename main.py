@@ -66,7 +66,7 @@ def verify_pr_on_ipinfo(
 
 
 if __name__ == "__main__":
-    app.run("0.0.0.0", port=3000)
+    app.run("0.0.0.0", port=os.getenv("PORT", 3000))
 
 
 
