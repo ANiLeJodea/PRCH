@@ -18,6 +18,8 @@ command_for_site_list = "cms"
 default_site_list_to_check = ["https://www.google.com", "https://openai.com", "https://instagram.com"]
 gtimeout: int = 6
 gportion: int = 100
+raw_file_name = 'raw.txt'
+checked_file_name = 'CHECKED PROXIES.txt'
 this_ip = requests.get('https://ipinfo.io/ip').text
 
 @app.route('/', methods=["POST"])
@@ -45,13 +47,10 @@ def handle_set_timeout(m):
     bot.send_message(m.chat.id, f"{before}\nNow: {gportion}")
 
 
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['info'])
 def handle_start(m):
-    bot.send_message(m.chat.id, "The bot is ready to perform\n"
-                                f"Send command /{command_for_ip_info} followed by the proxy "
-                                "(ip, port) you want to check with ipinfo.io/ip"
-                                f"Send command /{command_for_site_list} followed by the proxy "
-                                f"(ip, port) you want to verify on multiple sites")
+    bot.send_message(m.chat.id, "THIS FUNCTION NEEDS TO BE REWORKED\n"
+                                f"gportion: {gportion}\ngtimeout: {gtimeout}")
 
 @bot.message_handler(commands=[command_for_ip_info])
 def handle_ip_info_check(m):
@@ -96,7 +95,7 @@ def verify_proxy_on_ipinfo(
                       f"r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
 
     except Exception as e:
-        return False, f"Got the exception:\n{e}\n\nException class: {e.__class__}", proxy_ip_port
+        return False, f"E:\n{e}\nE class: {e.__class__}", proxy_ip_port
 
 @bot.message_handler(commands=[command_for_site_list])
 def handle_site_list_check(m):
@@ -151,7 +150,7 @@ def verify_proxy_on_site_list(
                                              f"r.status_code: {r.status_code}\n"
                                              f"Time taken: {time_taken}")
         except Exception as e:
-            test_results[site] = (False, f"Got an exception:\n{e}\n\nException class: {e.__class__}")
+            test_results[site] = (False, f"E:\n{e}\nE class: {e.__class__}")
 
         # time.sleep(delay_between)
 
@@ -198,14 +197,11 @@ def check_proxy_list_from_document(
     chat_id: str, raw_fpath: str, portion: int, condition: bool = None
 ):
     try:
-        raw_file_name = 'raw.txt'
-        checked_file_name = 'checked.txt'
         with open(raw_file_name, 'wb') as f:
             f.write(bot.download_file(raw_fpath))
         with open(raw_file_name, 'r') as fr, \
                 open(checked_file_name, 'w') as fw, \
                 ThreadPoolExecutor(max_workers=portion) as executor:
-            # proxies = fr.read().splitlines()
             if condition is not None:
                 fw.write("\n\n".join(f"{proxy} -> {text}"
                                      for bool_result, text, proxy in
@@ -218,8 +214,7 @@ def check_proxy_list_from_document(
 
         bot.send_document(
             chat_id=chat_id,
-            document=open(checked_file_name, 'rb'),
-            visible_file_name=f"CHECKED PROXIES"
+            document=open(checked_file_name, 'rb')
         )
     except Exception as e:
         bot.send_message(
