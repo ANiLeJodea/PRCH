@@ -18,6 +18,7 @@ command_for_site_list = "cms"
 default_site_list_to_check = ["https://www.google.com", "https://openai.com", "https://instagram.com"]
 gtimeout: int = 6
 gportion: int = 100
+this_ip = requests.get('https://ipinfo.io/ip').text
 
 @app.route('/', methods=["POST"])
 def handle_request():
@@ -41,7 +42,7 @@ def handle_set_timeout(m):
     global gportion
     before = f"Portion before: {gportion}"
     gportion = int(m.text[len('set_portion')+2:])
-    bot.send_message(m.chat.id, f"{before}\nNow: {gtimeout}")
+    bot.send_message(m.chat.id, f"{before}\nNow: {gportion}")
 
 
 @bot.message_handler(commands=['start'])
@@ -66,7 +67,7 @@ def handle_ip_info_check(m):
 
 def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_ip_port):
     # proxy_ip_port_list = proxy_ip_port.split(':')
-    if len(proxy_ip_port.split(':')) == 2:
+    if ':' in proxy_ip_port:
         text = verify_proxy_on_ipinfo(proxy_ip_port)[1]
     else:
         text = "Please, provide something to check in the correct format."
@@ -89,11 +90,10 @@ def verify_proxy_on_ipinfo(
         if r.status_code == 200:
             if r.text in proxy_ip_port:
                 return True, f"The proxy worked.\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
-            return False, "Seems like IpInfo didnt show the ip of the proxy properly." \
+            return False, f"Seems like IpInfo didnt show the ip of the proxy.\nthis_ip: {this_ip}" \
                           f"\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
         return False, "Seems like the proxy didnt work.\n" \
                       f"r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
-
 
     except Exception as e:
         return False, f"Got the exception:\n{e}\n\nException class: {e.__class__}", proxy_ip_port
@@ -129,7 +129,8 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
     bot.edit_message_text(
         text=text,
         chat_id=chat_id,
-        message_id=id_of_message_to_change
+        message_id=id_of_message_to_change,
+        disable_web_page_preview=True
     )
 
 def verify_proxy_on_site_list(
@@ -164,17 +165,17 @@ def handle_check_proxy_list_from_document(m: telebot.types.Message):
         reply_to_message_id=m.message_id
     ).id
     raw_file = bot.get_file(m.document.file_id)
-    try:
-        portion = int(m.caption)
-    except TypeError:
-        bot.edit_message_text(
-            chat_id=m.chat.id, message_id=answer_message_id,
-            text="Was not able to convert the caption of this message to an integer."
-                 f"Going to use the default value {gportion}"
-        )
-        portion = gportion
     raw_file_type = raw_file.file_path.split('.')[-1]
     if raw_file_type == 'txt':
+        try:
+            portion = int(m.caption)
+        except TypeError:
+            bot.edit_message_text(
+                chat_id=m.chat.id, message_id=answer_message_id,
+                text="Was not able to convert the caption of this message to an integer."
+                     f"Going to use the default value {gportion}"
+            )
+            portion = gportion
         thread = threading.Thread(
             target=check_proxy_list_from_document,
             args=(m.chat.id, raw_file.file_path, portion)
@@ -189,23 +190,30 @@ def handle_check_proxy_list_from_document(m: telebot.types.Message):
 def check_proxy_list_from_document(
     chat_id: str, raw_fpath: str, portion: int
 ):
-    raw_file_name = 'raw.txt'
-    checked_file_name = 'checked.txt'
-    with open(raw_file_name, 'wb') as f:
-        f.write(bot.download_file(raw_fpath))
-    with open(raw_file_name, 'r') as fr, \
-            open(checked_file_name, 'w') as fw, \
-            ThreadPoolExecutor(max_workers=portion) as executor:
-        # proxies = fr.read().splitlines()
-        fw.write("\n".join(f"{proxy} -> {text}"
-                           for bool_result, text, proxy in
-                           executor.map(verify_proxy_on_ipinfo, fr.read().splitlines())
-                           if bool_result))
-    bot.send_document(
-        chat_id=chat_id,
-        document=open(checked_file_name, 'rb'),
-        visible_file_name=f"CHECKED PROXIES"
-    )
+    try:
+        raw_file_name = 'raw.txt'
+        checked_file_name = 'checked.txt'
+        with open(raw_file_name, 'wb') as f:
+            f.write(bot.download_file(raw_fpath))
+        with open(raw_file_name, 'r') as fr, \
+                open(checked_file_name, 'w') as fw, \
+                ThreadPoolExecutor(max_workers=portion) as executor:
+            # proxies = fr.read().splitlines()
+            fw.write("\n".join(f"{proxy} -> {text}"
+                               for bool_result, text, proxy in
+                               executor.map(verify_proxy_on_ipinfo, fr.read().splitlines())
+                               if bool_result))
+        bot.send_document(
+            chat_id=chat_id,
+            document=open(checked_file_name, 'rb'),
+            # visible_file_name=f"CHECKED PROXIES"
+        )
+    except Exception as e:
+        bot.send_message(
+            chat_id=chat_id,
+            text=f"E:\n{e}\nE class: {e.__class__}",
+            disable_web_page_preview=True
+        )
 
 if __name__ == "__main__":
     app.run("0.0.0.0", port=os.getenv("PORT", 3000))
