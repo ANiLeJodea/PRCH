@@ -167,18 +167,25 @@ def handle_check_proxy_list_from_document(m: telebot.types.Message):
     raw_file = bot.get_file(m.document.file_id)
     raw_file_type = raw_file.file_path.split('.')[-1]
     if raw_file_type == 'txt':
-        try:
-            portion = int(m.caption)
-        except TypeError:
-            bot.edit_message_text(
-                chat_id=m.chat.id, message_id=answer_message_id,
-                text="Was not able to convert the caption of this message to an integer."
-                     f"Going to use the default value {gportion}"
-            )
-            portion = gportion
+        arguments = m.caption.split(';')
+        filter_condition = None
+        if len(arguments) == 2:
+            filter_condition = bool(arguments[1])
+        if arguments[0].lower() == "no":
+            portion = None
+        else:
+            try:
+                portion = int(arguments[0])
+            except TypeError:
+                bot.edit_message_text(
+                    chat_id=m.chat.id, message_id=answer_message_id,
+                    text="The caption of this message is not 'no' and I was not able to convert it to an integer.\n"
+                         f"Going to use the default value {gportion}"
+                )
+                portion = gportion
         thread = threading.Thread(
             target=check_proxy_list_from_document,
-            args=(m.chat.id, raw_file.file_path, portion)
+            args=(m.chat.id, raw_file.file_path, portion, filter_condition)
         )
         thread.start()
     else:
@@ -188,7 +195,7 @@ def handle_check_proxy_list_from_document(m: telebot.types.Message):
         )
 
 def check_proxy_list_from_document(
-    chat_id: str, raw_fpath: str, portion: int
+    chat_id: str, raw_fpath: str, portion: int, condition: bool = None
 ):
     try:
         raw_file_name = 'raw.txt'
@@ -199,14 +206,20 @@ def check_proxy_list_from_document(
                 open(checked_file_name, 'w') as fw, \
                 ThreadPoolExecutor(max_workers=portion) as executor:
             # proxies = fr.read().splitlines()
-            fw.write("\n".join(f"{proxy} -> {text}"
-                               for bool_result, text, proxy in
-                               executor.map(verify_proxy_on_ipinfo, fr.read().splitlines())
-                               if bool_result))
+            if condition is not None:
+                fw.write("\n\n".join(f"{proxy} -> {text}"
+                                     for bool_result, text, proxy in
+                                     executor.map(verify_proxy_on_ipinfo, fr.read().splitlines())
+                                     if bool_result is condition))
+            else:
+                fw.write("\n\n".join(f"{proxy} -> {text}"
+                                     for bool_result, text, proxy in
+                                     executor.map(verify_proxy_on_ipinfo, fr.read().splitlines())))
+
         bot.send_document(
             chat_id=chat_id,
             document=open(checked_file_name, 'rb'),
-            # visible_file_name=f"CHECKED PROXIES"
+            visible_file_name=f"CHECKED PROXIES"
         )
     except Exception as e:
         bot.send_message(
@@ -217,6 +230,5 @@ def check_proxy_list_from_document(
 
 if __name__ == "__main__":
     app.run("0.0.0.0", port=os.getenv("PORT", 3000))
-
 
 
