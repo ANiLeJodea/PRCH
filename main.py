@@ -80,7 +80,7 @@ def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_ip_port):
 
 def verify_proxy_on_ipinfo(
         proxy_ip_port: str
-) -> tuple[bool, str, str]:
+) -> tuple[bool, str]:
     try:
         t = time.time()
         r = requests.get(
@@ -89,14 +89,14 @@ def verify_proxy_on_ipinfo(
         time_taken = round(time.time() - t, 4)
         if r.status_code == 200:
             if r.text in proxy_ip_port:
-                return True, f"The proxy worked.\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
+                return True, f"The proxy worked.\nr.text: {r.text}\nTime taken: {time_taken}"
             return False, f"Seems like IpInfo didnt show the ip of the proxy.\nthis_ip: {this_ip}" \
-                          f"\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
+                          f"\nr.text: {r.text}\nTime taken: {time_taken}"
         return False, "Seems like the proxy didnt work.\n" \
-                      f"r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
+                      f"r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken: {time_taken}"
 
     except Exception as e:
-        return False, f"Got the exception:\n{e}\n\nException class: {e.__class__}", proxy_ip_port
+        return False, f"Got the exception:\n{e}\n\nException class: {e.__class__}"
 
 @bot.message_handler(commands=[command_for_site_list])
 def handle_site_list_check(m):
@@ -193,20 +193,22 @@ def check_proxy_list_from_document(
     try:
         raw_file_name = 'raw.txt'
         checked_file_name = 'checked.txt'
+        bot.send_message(chat_id, "Before open()")
         with open(raw_file_name, 'wb') as f:
             f.write(bot.download_file(raw_fpath))
+        bot.send_message(chat_id, "After open()")
         with open(raw_file_name, 'r') as fr, \
                 open(checked_file_name, 'w') as fw, \
                 ThreadPoolExecutor(max_workers=portion) as executor:
             # proxies = fr.read().splitlines()
-            fw.write("\n".join(f"{proxy} -> {text}"
-                               for bool_result, text, proxy in
-                               executor.map(verify_proxy_on_ipinfo, fr.read().splitlines())
-                               if bool_result))
+            results = [executor.submit(verify_proxy_on_ipinfo, proxy_ip_port=proxy_ip_port)
+                       for proxy_ip_port in fr.read().splitlines()]
+            me = [res.result()[1] for res in results if res.result()[0]]
+            fw.write("\n".join())
         bot.send_document(
             chat_id=chat_id,
             document=open(checked_file_name, 'rb'),
-            # visible_file_name=f"CHECKED PROXIES"
+            visible_file_name="CHECKED PROXIES"
         )
     except Exception as e:
         bot.send_message(
