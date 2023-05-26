@@ -4,7 +4,11 @@ import os
 # External packages
 import psycopg2
 
+save_all_data: dict | None = None
+
 def get_data() -> dict:
+    global save_all_data
+
     conn = psycopg2.connect(os.environ['DB_LINK'])
     cur = conn.cursor()
     cur.execute("""SELECT * FROM main_data""")
@@ -19,5 +23,6 @@ def get_data() -> dict:
     cur.execute("""SELECT value FROM admin_id""")
     all_data['admins'] = [d[0] for d in cur.fetchall()]
 
+    save_all_data = all_data
     return all_data
 

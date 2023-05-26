@@ -7,7 +7,8 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 
 # Project packages
-from main import all_data, bot
+from data import save_all_data
+from setup import bot
 from helpers import exc_to_str
 
 def verify_proxy_on_ipinfo(

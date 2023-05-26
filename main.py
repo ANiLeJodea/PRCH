@@ -9,13 +9,14 @@ from flask import Flask, request
 
 # Project packages
 # verify_proxy_on_ipinfo
-from verify import check_proxy_list_from_document, \
+from verify import bot, check_proxy_list_from_document, \
     verify_proxy_on_site_list, verify_proxy_on_ipinfo_w_time_time
-from data import get_data
-from setup import all_data
+from data import get_data, save_all_data
+
+all_data = save_all_data
+# bot.send_message(chat_id=os.environ['LOG_FORUM_ID'], message_thread_id=os.environ['LOG_TOPIC_ID'], text=f"")
 
 app = Flask(__name__)
-bot = telebot.TeleBot(token=os.environ["BOT_TOKEN"])
 
 @app.route('/', methods=["POST"])
 def handle_request():
