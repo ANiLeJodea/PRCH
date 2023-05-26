@@ -1,65 +1,53 @@
-# Pre-installed packages
+# Python default packages
 import os
 import threading
-import time
-from concurrent.futures import ThreadPoolExecutor
 
 # External packages
-import requests
 import telebot
+from telebot.types import Message
 from flask import Flask, request
 
-LOG_FORUM_ID, LOG_TOPIC_ID = os.environ['LOG_ENTITY'].split(' ')
+# Project packages
+# verify_proxy_on_ipinfo
+from verify import check_proxy_list_from_document, \
+    verify_proxy_on_site_list, verify_proxy_on_ipinfo_w_time_time
+from data import get_data
+from setup import all_data
+
 app = Flask(__name__)
 bot = telebot.TeleBot(token=os.environ["BOT_TOKEN"])
-ADMIN_IDS = [652015662, 1309387740]
-command_for_ip_info = "cs"
-command_for_site_list = "cms"
-default_site_list_to_check = ["https://www.google.com", "https://openai.com", "https://instagram.com"]
-gtimeout: int = 6
-gportion: int = 100
-raw_file_name = 'raw.txt'
-checked_file_name = 'CHECKED PROXIES.txt'
-this_ip = requests.get('https://ipinfo.io/ip').text
 
 @app.route('/', methods=["POST"])
 def handle_request():
     if request.headers.get('content-type') == "application/json":
         update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
-        m = update.message
-        if m.from_user.id in ADMIN_IDS:
+        m: Message = update.message
+        if str(m.from_user.id) in all_data['admins']:
             bot.process_new_updates([update])
     return "OK"
 
 
-@bot.message_handler(commands=['set_timeout'])
-def handle_set_timeout(m):
-    global gtimeout
-    before = f"Timeout before: {gtimeout}"
-    gtimeout = int(m.text[len('set_timeout')+2:])
-    bot.send_message(m.chat.id, f"{before}\nNow: {gtimeout}")
-
-@bot.message_handler(commands=['set_portion'])
-def handle_set_timeout(m):
-    global gportion
-    before = f"Portion before: {gportion}"
-    gportion = int(m.text[len('set_portion')+2:])
-    bot.send_message(m.chat.id, f"{before}\nNow: {gportion}")
-
+@bot.message_handler(commands=['update_data'])
+def handle_update_data(m: Message):
+    global all_data
+    all_data = get_data()
+    bot.send_message(m.chat.id, f"Successfully updated data")
 
 @bot.message_handler(commands=['info'])
-def handle_start(m):
-    bot.send_message(m.chat.id, "THIS FUNCTION NEEDS TO BE REWORKED\n"
-                                f"gportion: {gportion}\ngtimeout: {gtimeout}")
+def handle_start(m: Message):
+    bot.send_message(
+        m.chat.id,
+        "ALL DATA:\n{}".format(all_data['separator'].join("{} ::\n{}".format(key, data) for key, data in all_data))
+    )
 
-@bot.message_handler(commands=[command_for_ip_info])
-def handle_ip_info_check(m):
+@bot.message_handler(commands=[all_data['command_for_ip_info']])
+def handle_ip_info_check(m: Message):
     answer_message_id = bot.send_message(m.chat.id, "Trying to verify...").id
     thread = threading.Thread(
         target=perform_ip_info_check, args=(
             m.chat.id,
             answer_message_id,
-            m.text[len(command_for_ip_info) + 2:]
+            m.text[len(all_data['command_for_ip_info']) + 2:]
         )
     )
     thread.start()
@@ -67,7 +55,7 @@ def handle_ip_info_check(m):
 def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_ip_port):
     # proxy_ip_port_list = proxy_ip_port.split(':')
     if ':' in proxy_ip_port:
-        text = verify_proxy_on_ipinfo(proxy_ip_port)[1]
+        text = verify_proxy_on_ipinfo_w_time_time(proxy_ip_port)[1]
     else:
         text = "Please, provide something to check in the correct format."
 
@@ -77,34 +65,15 @@ def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_ip_port):
         message_id=id_of_message_to_change
     )
 
-def verify_proxy_on_ipinfo(
-        proxy_ip_port: str
-) -> tuple[bool, str, str]:
-    try:
-        t = time.time()
-        r = requests.get(
-            "https://ipinfo.io/ip", proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=gtimeout
-        )
-        time_taken = round(time.time() - t, 4)
-        if r.status_code == 200:
-            if r.text in proxy_ip_port:
-                return True, f"The proxy worked.\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
-            return False, f"Seems like IpInfo didnt show the ip of the proxy.\nthis_ip: {this_ip}" \
-                          f"\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
-        return False, "Seems like the proxy didnt work.\n" \
-                      f"r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
 
-    except Exception as e:
-        return False, f"E:\n{e}\nE class: {e.__class__}", proxy_ip_port
-
-@bot.message_handler(commands=[command_for_site_list])
-def handle_site_list_check(m):
+@bot.message_handler(commands=[all_data['command_for_site_list']])
+def handle_site_list_check(m: Message):
     answer_message_id = bot.send_message(m.chat.id, "Trying to verify on a site list...").id
     thread = threading.Thread(
         target=perform_site_list_check, args=(
             m.chat.id,
             answer_message_id,
-            m.text[len(command_for_site_list) + 2:]
+            m.text[len(all_data['command_for_site_list']) + 2:]
         )
     )
     thread.start()
@@ -116,7 +85,7 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
         text = "Results:\n"
         if args_list_len == 2:
             proxy_ip, proxy_port = args_list
-            sites_list = default_site_list_to_check
+            sites_list = all_data['default_site_list_to_check']
         elif args_list_len == 3:
             proxy_ip, proxy_port, sites = args_list
             sites_list = [f'https://{s}' for s in sites.split(',')]
@@ -132,32 +101,8 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
         disable_web_page_preview=True
     )
 
-def verify_proxy_on_site_list(
-        proxy_ip: str, proxy_port: str, site_list: list
-) -> dict:
-    # delay_between: int = 2
-    test_results = {}
-    proxy_ip_port = f"{proxy_ip}:{proxy_port}"
-    for site in site_list:
-        try:
-            t = time.time()
-            r = requests.get(site, proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=gtimeout)
-            time_taken = round(time.time() - t, 4)
-            if r.status_code == 200:
-                test_results[site] = (True, f"The proxy worked.\nTime taken: {time_taken}")
-            else:
-                test_results[site] = (False, "Seems like the proxy didnt work.\n"
-                                             f"r.status_code: {r.status_code}\n"
-                                             f"Time taken: {time_taken}")
-        except Exception as e:
-            test_results[site] = (False, f"E:\n{e}\nE class: {e.__class__}")
-
-        # time.sleep(delay_between)
-
-    return test_results
-
 @bot.message_handler(content_types=['document'])
-def handle_check_proxy_list_from_document(m: telebot.types.Message):
+def handle_check_proxy_list_from_document(m: Message):
     answer_message_id = bot.send_message(
         chat_id=m.chat.id,
         text="Trying to verify all the proxies in this file...",
@@ -179,9 +124,9 @@ def handle_check_proxy_list_from_document(m: telebot.types.Message):
                 bot.edit_message_text(
                     chat_id=m.chat.id, message_id=answer_message_id,
                     text="The caption of this message is not 'no' and I was not able to convert it to an integer.\n"
-                         f"Going to use the default value {gportion}"
+                         f"Going to use the default value {all_data['portion']}"
                 )
-                portion = gportion
+                portion = all_data['portion']
         thread = threading.Thread(
             target=check_proxy_list_from_document,
             args=(m.chat.id, raw_file.file_path, portion, filter_condition)
@@ -191,36 +136,6 @@ def handle_check_proxy_list_from_document(m: telebot.types.Message):
         bot.edit_message_text(
             chat_id=m.chat.id, message_id=answer_message_id,
             text="Not supported file type. Unable to check. Try again with .txt file"
-        )
-
-def check_proxy_list_from_document(
-    chat_id: str, raw_fpath: str, portion: int, condition: bool = None
-):
-    try:
-        with open(raw_file_name, 'wb') as f:
-            f.write(bot.download_file(raw_fpath))
-        with open(raw_file_name, 'r') as fr, \
-                open(checked_file_name, 'w') as fw, \
-                ThreadPoolExecutor(max_workers=portion) as executor:
-            if condition is not None:
-                fw.write("\n\n".join(f"{proxy} -> {text}"
-                                     for bool_result, text, proxy in
-                                     executor.map(verify_proxy_on_ipinfo, fr.read().splitlines())
-                                     if bool_result is condition))
-            else:
-                fw.write("\n\n".join(f"{proxy} -> {text}"
-                                     for bool_result, text, proxy in
-                                     executor.map(verify_proxy_on_ipinfo, fr.read().splitlines())))
-
-        bot.send_document(
-            chat_id=chat_id,
-            document=open(checked_file_name, 'rb')
-        )
-    except Exception as e:
-        bot.send_message(
-            chat_id=chat_id,
-            text=f"E:\n{e}\nE class: {e.__class__}",
-            disable_web_page_preview=True
         )
 
 if __name__ == "__main__":
