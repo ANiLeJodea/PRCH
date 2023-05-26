@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 
 # Project packages
-from data import save_data
+from data import save_data as data
 from setup import bot
 from helpers import exc_to_str
 
@@ -17,7 +17,7 @@ def verify_proxy_on_ipinfo(
     try:
         # t = time.time()
         r = requests.get(
-            "https://ipinfo.io/ip", proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=all_data['timeout']
+            "https://ipinfo.io/ip", proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=data['timeout']
         )
         # time_taken = round(time.time() - t, 4)
         time_taken = r.elapsed.total_seconds()
@@ -39,7 +39,7 @@ def verify_proxy_on_ipinfo_w_time_time(
     try:
         t = time.time()
         r = requests.get(
-            "https://ipinfo.io/ip", proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=all_data['timeout']
+            "https://ipinfo.io/ip", proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=data['timeout']
         )
         time_taken_t = round(time.time() - t, 4)
         time_taken_r = r.elapsed.total_seconds()
@@ -63,7 +63,7 @@ def verify_proxy_on_site_list(
     for site in site_list:
         try:
             # t = time.time()
-            r = requests.get(site, proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=all_data['timeout'])
+            r = requests.get(site, proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=data['timeout'])
 
             # time_taken = round(time.time() - t, 4)
             time_taken = r.elapsed.total_seconds()
@@ -83,10 +83,12 @@ def check_proxy_list_from_document(
     chat_id: str, telegram_raw_file_path: str, portion: int, condition: bool = None
 ):
     try:
-        checked_file_name = save_data['checked_file_name'] + f"_{time.strftime('%H:%M:%S %d/%m/%Y')}"
-        with open(save_data['raw_file_name'], 'wb') as f:
+        checked_file_name = data['checked_file_name'] + ".txt"
+        checked_file_name_w_time = data['checked_file_name'] + f"_{time.strftime('%H:%M:%S %d/%m/%Y')}.txt"
+        raw_file_name = data['raw_file_name'] + '.txt'
+        with open(raw_file_name, 'wb') as f:
             f.write(bot.download_file(telegram_raw_file_path))
-        with open(save_data['raw_file_name'], 'r') as fr, \
+        with open(raw_file_name, 'r') as fr, \
                 open(checked_file_name, 'w') as fw, \
                 ThreadPoolExecutor(max_workers=portion) as executor:
             if condition is not None:
@@ -101,8 +103,10 @@ def check_proxy_list_from_document(
 
         bot.send_document(
             chat_id=chat_id,
-            document=open(checked_file_name, 'rb')
+            document=open(checked_file_name, 'rb'),
+            visible_file_name=checked_file_name_w_time
         )
+
     except Exception as e:
         bot.send_message(
             chat_id=chat_id,

@@ -9,7 +9,6 @@ from helpers import pretify
 
 save_data: dict = None
 
-
 class AllData:
 
     def __init__(self, dec_text: str = "*"):

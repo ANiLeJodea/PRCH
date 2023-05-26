@@ -14,7 +14,8 @@ from verify import bot, check_proxy_list_from_document, \
     verify_proxy_on_site_list, verify_proxy_on_ipinfo_w_time_time
 from data import AllData
 
-all_data = AllData() if all_data_now is None else all_data_now
+# all_data = AllData() if all_data_now is None else all_data_now
+all_data = all_data_now
 # bot.send_message(chat_id=os.environ['LOG_FORUM_ID'], message_thread_id=os.environ['LOG_TOPIC_ID'], text=f"")
 
 app = Flask(__name__)
@@ -39,8 +40,9 @@ def handle_update_data(m: Message):
 def handle_start(m: Message):
     bot.send_message(
         m.chat.id,
-        all_data.data_str
+        all_data.data_str + f"\nLast {all_data.data['checked_file_name']}:"
     )
+    bot.send_document(m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb'))
 
 @bot.message_handler(commands=[all_data.data['command_for_ip_info']])
 def handle_ip_info_check(m: Message):
