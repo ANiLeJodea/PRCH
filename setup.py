@@ -9,9 +9,9 @@ from telebot import TeleBot
 from data import AllData
 
 bot = TeleBot(token=environ["BOT_TOKEN"])
-all_data = AllData().data
+all_data = AllData()
 
-environ['LOG_FORUM_ID'], environ['LOG_TOPIC_ID'] = all_data['log_entity'].split(" ")
+environ['LOG_FORUM_ID'], environ['LOG_TOPIC_ID'] = all_data.data['log_entity'].split(" ")
 
 
 environ['THIS_IP'] = requests.get('https://ipinfo.io/ip').text

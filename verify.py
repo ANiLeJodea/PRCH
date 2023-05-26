@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 
 # Project packages
-# from data import save_all_data
+from data import save_data
 from setup import bot
 from helpers import exc_to_str
 
@@ -83,10 +83,10 @@ def check_proxy_list_from_document(
     chat_id: str, telegram_raw_file_path: str, portion: int, condition: bool = None
 ):
     try:
-        checked_file_name = all_data['checked_file_name'] + f"_{time.strftime('%H:%M:%S %d/%m/%Y')}"
-        with open(all_data['raw_file_name'], 'wb') as f:
+        checked_file_name = save_data['checked_file_name'] + f"_{time.strftime('%H:%M:%S %d/%m/%Y')}"
+        with open(save_data['raw_file_name'], 'wb') as f:
             f.write(bot.download_file(telegram_raw_file_path))
-        with open(all_data['raw_file_name'], 'r') as fr, \
+        with open(save_data['raw_file_name'], 'r') as fr, \
                 open(checked_file_name, 'w') as fw, \
                 ThreadPoolExecutor(max_workers=portion) as executor:
             if condition is not None:
