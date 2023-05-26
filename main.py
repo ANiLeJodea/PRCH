@@ -11,9 +11,9 @@ from flask import Flask, request
 # verify_proxy_on_ipinfo
 from verify import bot, check_proxy_list_from_document, \
     verify_proxy_on_site_list, verify_proxy_on_ipinfo_w_time_time
-from data import get_data, save_all_data
+from data import get_all_data, save_all
 
-all_data = save_all_data
+all_data, str_all_data = save_all
 # bot.send_message(chat_id=os.environ['LOG_FORUM_ID'], message_thread_id=os.environ['LOG_TOPIC_ID'], text=f"")
 
 app = Flask(__name__)
@@ -30,15 +30,15 @@ def handle_request():
 
 @bot.message_handler(commands=['update_data'])
 def handle_update_data(m: Message):
-    global all_data
-    all_data = get_data()
+    global all_data, str_all_data
+    all_data, str_all_data = get_all_data()
     bot.send_message(m.chat.id, f"Successfully updated data")
 
 @bot.message_handler(commands=['info'])
 def handle_start(m: Message):
     bot.send_message(
         m.chat.id,
-        "ALL DATA:\n{}".format(all_data['separator'].join("{} ::\n{}".format(key, data) for key, data in all_data))
+        str_all_data
     )
 
 @bot.message_handler(commands=[all_data['command_for_ip_info']])

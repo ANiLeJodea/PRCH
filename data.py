@@ -4,10 +4,10 @@ import os
 # External packages
 import psycopg2
 
-save_all_data: dict = None
+save_all: tuple[dict, str] = None
 
-def get_data() -> dict:
-    global save_all_data
+def get_all_data() -> tuple[dict, str]:
+    global save_all
 
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
@@ -23,6 +23,10 @@ def get_data() -> dict:
     cur.execute("""SELECT value FROM admin_id""")
     all_data['admins'] = [d[0] for d in cur.fetchall()]
 
-    save_all_data = all_data
-    return all_data
+    save_all = (
+        all_data,
+        "ALL DATA:\n{}".format(all_data['separator'].join("{} ::\n{}".format(key, data) for key, data in all_data))
+    )
+    return save_all
+
 
