@@ -11,7 +11,8 @@ from data import get_data
 bot = TeleBot(token=environ["BOT_TOKEN"])
 all_data: dict = get_data()
 
-environ['LOG_FORUM_ID'], environ['LOG_TOPIC_ID'] = all_data['log_entity']
+environ['LOG_FORUM_ID'], environ['LOG_TOPIC_ID'] = all_data['log_entity'].split(" ")
+
 
 environ['THIS_IP'] = requests.get('https://ipinfo.io/ip').text
 
