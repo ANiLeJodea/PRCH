@@ -8,7 +8,6 @@ import requests
 
 # Project packages
 from data import save_data as data
-from setup import bot
 from helpers import exc_to_str
 
 def verify_proxy_on_ipinfo(
@@ -79,37 +78,20 @@ def verify_proxy_on_site_list(
 
     return test_results
 
-def check_proxy_list_from_document(
-    chat_id: str, telegram_raw_file_path: str, portion: int, condition: bool = None
+def check_proxies_from_document(
+        raw_file_path: str, portion: int = 100, condition: bool = None
 ):
-    try:
-        checked_file_name = data['checked_file_name'] + ".txt"
-        checked_file_name_w_time = data['checked_file_name'] + f"_{time.strftime('%H:%M:%S %d/%m/%Y')}.txt"
-        raw_file_name = data['raw_file_name'] + '.txt'
-        with open(raw_file_name, 'wb') as f:
-            f.write(bot.download_file(telegram_raw_file_path))
-        with open(raw_file_name, 'r') as fr, \
-                open(checked_file_name, 'w') as fw, \
-                ThreadPoolExecutor(max_workers=portion) as executor:
-            if condition is not None:
-                fw.write("\n\n".join(f"{proxy} -> {text}"
-                                     for bool_result, text, proxy in
-                                     executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())
-                                     if bool_result is condition))
-            else:
-                fw.write("\n\n".join(f"{proxy} -> {text}"
-                                     for bool_result, text, proxy in
-                                     executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())))
-
-        bot.send_document(
-            chat_id=chat_id,
-            document=open(checked_file_name, 'rb'),
-            visible_file_name=checked_file_name_w_time
-        )
-
-    except Exception as e:
-        bot.send_message(
-            chat_id=chat_id,
-            text=exc_to_str(e, title="An exception occurred (was not able to finish):\n\n"),
-            disable_web_page_preview=True
-        )
+    name_with_date = data['checked_file_name'] + f"_{time.strftime('%H:%M:%S %d/%m/%Y')}.txt"
+    with open(raw_file_path, 'r') as fr, \
+            open(data['checked_file_name'] + ".txt", 'w') as fw, \
+            ThreadPoolExecutor(max_workers=portion) as executor:
+        if condition is not None:
+            fw.write("\n\n".join(f"{proxy} -> {text}"
+                                 for bool_result, text, proxy in
+                                 executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())
+                                 if bool_result is condition))
+        else:
+            fw.write("\n\n".join(f"{proxy} -> {text}"
+                                 for bool_result, text, proxy in
+                                 executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())))
+    return name_with_date

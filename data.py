@@ -38,7 +38,7 @@ class AllData:
 
     def data_to_str(self, dec_text: str) -> str:
         return "ALL DATA:\n{}".format(
-            self.data['separator'].join("{} ::\n{}".format(pretify(data, dec_text=dec_text),
-                                                           pretify(data, dec_text=dec_text))
-                                        for key, data in self.data)
+            self.data['separator'].join("{}{}{} ::\n{}".format(dec_text, key, dec_text,
+                                                               pretify(data, dec_text=dec_text))
+                                        for key, data in self.data.items())
         )

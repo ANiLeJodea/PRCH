@@ -8,11 +8,12 @@ from telebot.types import Message
 from flask import Flask, request
 
 # Project packages
-from setup import all_data as all_data_now
+from setup import all_data as all_data_now, bot
 # verify_proxy_on_ipinfo
-from verify import bot, check_proxy_list_from_document, \
+from verify import check_proxies_from_document, \
     verify_proxy_on_site_list, verify_proxy_on_ipinfo_w_time_time
 from data import AllData
+from helpers import exc_to_str
 
 # all_data = AllData() if all_data_now is None else all_data_now
 all_data = all_data_now
@@ -132,7 +133,7 @@ def handle_check_proxy_list_from_document(m: Message):
                 )
                 portion = all_data.data['portion']
         thread = threading.Thread(
-            target=check_proxy_list_from_document,
+            target=check_proxies_from_document,
             args=(m.chat.id, raw_file.file_path, portion, filter_condition)
         )
         thread.start()
@@ -140,6 +141,31 @@ def handle_check_proxy_list_from_document(m: Message):
         bot.edit_message_text(
             chat_id=m.chat.id, message_id=answer_message_id,
             text="Not supported file type. Unable to check. Try again with .txt file"
+        )
+
+def check_proxy_list_from_document(
+    chat_id: str, telegram_raw_file_path: str, portion: int, condition: bool
+):
+    raw_file_path = all_data.data['raw_file_name'] + '.txt'
+    with open(raw_file_path, 'wb') as f:
+        f.write(bot.download_file(telegram_raw_file_path))
+
+    result = check_proxies_from_document(raw_file_path, portion, condition)
+    if 'exception' in str(type(result)):
+        bot.send_message(
+            chat_id=chat_id,
+            text=exc_to_str(result, title="An error occurred (Failed to verify all):\n\n")
+        )
+        bot.send_document(
+            chat_id=chat_id,
+            document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
+            visible_file_name="Crashed Results.txt"
+        )
+    else:
+        bot.send_document(
+            chat_id=chat_id,
+            document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
+            visible_file_name=result
         )
 
 if __name__ == "__main__":
