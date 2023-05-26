@@ -4,7 +4,7 @@ import os
 # External packages
 import psycopg2
 
-save_all_data: dict | None = None
+save_all_data: dict = None
 
 def get_data() -> dict:
     global save_all_data
