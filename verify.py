@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 
 # Project packages
-from data import save_all_data
+# from data import save_all_data
 from setup import bot
 from helpers import exc_to_str
 

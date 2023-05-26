@@ -9,7 +9,7 @@ save_all_data: dict = None
 def get_data() -> dict:
     global save_all_data
 
-    conn = psycopg2.connect(os.environ['DB_LINK'])
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
     cur.execute("""SELECT * FROM main_data""")
     all_data = {}
