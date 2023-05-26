@@ -6,10 +6,10 @@ import requests
 from telebot import TeleBot
 
 # Project packages
-from data import get_all_data
+from data import AllData
 
 bot = TeleBot(token=environ["BOT_TOKEN"])
-all_data: dict = get_all_data()[0]
+all_data = AllData().data
 
 environ['LOG_FORUM_ID'], environ['LOG_TOPIC_ID'] = all_data['log_entity'].split(" ")
 
