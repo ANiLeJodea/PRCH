@@ -82,16 +82,19 @@ def check_proxies_from_document(
         raw_file_path: str, portion: int = 100, condition: bool = None
 ):
     name_with_date = data['checked_file_name'] + f"_{time.strftime('%H:%M:%S %d/%m/%Y')}.txt"
-    with open(raw_file_path, 'r') as fr, \
-            open(data['checked_file_name'] + ".txt", 'w') as fw, \
-            ThreadPoolExecutor(max_workers=portion) as executor:
-        if condition is not None:
-            fw.write("\n\n".join(f"{proxy} -> {text}"
-                                 for bool_result, text, proxy in
-                                 executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())
-                                 if bool_result is condition))
-        else:
-            fw.write("\n\n".join(f"{proxy} -> {text}"
-                                 for bool_result, text, proxy in
-                                 executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())))
+    try:
+        with open(raw_file_path, 'r') as fr, \
+                open(data['checked_file_name'] + ".txt", 'w') as fw, \
+                ThreadPoolExecutor(max_workers=portion) as executor:
+            if condition is not None:
+                fw.write("\n\n".join(f"{proxy} -> {text}"
+                                     for bool_result, text, proxy in
+                                     executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())
+                                     if bool_result is condition))
+            else:
+                fw.write("\n\n".join(f"{proxy} -> {text}"
+                                     for bool_result, text, proxy in
+                                     executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())))
+    except Exception as e:
+        return e, name_with_date
     return name_with_date
