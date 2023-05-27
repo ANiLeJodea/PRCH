@@ -34,7 +34,7 @@ def handle_request():
 def handle_info(m: Message):
     answer_text = all_data.data_str + \
                   f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nSTARTED_TIME : {os.environ['STARTED_TIME']}\n\n" \
-                  f"Time went from program start : {time.time() - int(os.environ['STARTED_TIME_INT'])}\n\n"
+                  f"Time went from program start : {time.time() - float(os.environ['STARTED_TIME_INT'])}\n\n"
     message_id_to_answer = m.message_id
 
     try:
@@ -67,13 +67,13 @@ def define_handlers_of_dynamic_commands():
 
     @bot.message_handler(commands=[all_data.data['command_for_ip_info']])
     def handle_ip_info_check(m: Message):
-        proxy_args = m.text[len(all_data.data['command_for_ip_info']) + 2:].split(' --')
-        answer_message_id = bot.enc_send_message(m.chat.id, f"Trying to verify {proxy_args[0]}...").id
+        proxy = m.text[len(all_data.data['command_for_ip_info']) + 2:]
+        answer_message_id = bot.enc_send_message(m.chat.id, f"Trying to verify {proxy}...").id
         thread = threading.Thread(
             target=perform_ip_info_check, args=(
                 m.chat.id,
                 answer_message_id,
-                proxy_args[0]
+                proxy
             )
         )
         thread.start()
