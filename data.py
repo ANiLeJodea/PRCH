@@ -11,13 +11,13 @@ save_data: dict = None
 
 class AllData:
 
-    def __init__(self, mode: str = 'markdown'):
-        self.mode = mode if mode in ['html', 'markdown'] else 'markdown'
-        if self.mode == 'markdown':
-            self.dec_text_start = self.dec_text_end = '**'
-        else:
+    def __init__(self, mode: str = 'html'):
+        self.mode = mode if mode in ['html', 'markdown'] else 'html'
+        if self.mode == 'html':
             self.dec_text_start = '<strong>'
             self.dec_text_end = '</strong>'
+        else:
+            self.dec_text_start = self.dec_text_end = '**'
         self.data: dict = self.get_data()
         self.data_str: str = self.data_to_str()
 

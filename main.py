@@ -47,7 +47,7 @@ def define_handlers_of_dynamic_commands():
 
         global all_data
 
-        all_data = AllData(mode=m.text[(len(all_data.data['command_for_update_data'])+2)])
+        all_data = AllData(mode=m.text[(len(all_data.data['command_for_update_data'])+2):])
         bot.send_message(m.chat.id, f"Using {all_data.mode}. Updating by calling define()...")
         define_handlers_of_dynamic_commands()
 

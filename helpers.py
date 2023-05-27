@@ -7,7 +7,7 @@ def exc_to_str(exception: Exception, title: str = "EXCEPTION:\n\n", limit: int =
         title = ""
     return title + separator.join(traceback.format_exception(exception, limit=limit))
 
-def pretify(arg, dec_text_start: str = '**', dec_text_end: str = '**'):
+def pretify(arg, dec_text_start: str = '<strong>', dec_text_end: str = '</strong>'):
     t = type(arg)
     if t in [list, tuple]:
         return 'list:: ' + ' ; '.join(f'{dec_text_start}{a}{dec_text_end} ({type(a)})' for a in arg[:3])
