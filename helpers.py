@@ -10,9 +10,10 @@ def exc_to_str(exception: Exception, title: str = "EXCEPTION:\n\n", limit: int =
 def pretify(arg, dec_text_start: str = '<strong>', dec_text_end: str = '</strong>'):
     t = type(arg)
     if t in [list, tuple]:
-        return 'list:: ' + ' ; '.join(f'{dec_text_start}{a}{dec_text_end} ({type(a)})' for a in arg[:3])
+        return 'list:: ' + ' ; '.join(f'''{dec_text_start}{a}{dec_text_end} ({str(type(a)).split("'")[1]})''' for a in arg[:3])
     elif t == "dict":
-        return 'dict:: ' + ' ; '.join(f"{dec_text_start}{k}{dec_text_end} : {dec_text_start}{v}{dec_text_end}"
+        return 'dict:: ' + ' ; '.join(f"""{dec_text_start}{k}{dec_text_end} : {dec_text_start}{v}{dec_text_end} 
+        ({str(type(v)).split("'")[1]})"""
                                       for k, v in arg.items()[:3])
     else:
         return f"{dec_text_start}{arg}{dec_text_end}"
