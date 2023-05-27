@@ -11,7 +11,7 @@ from flask import Flask, request
 from setup import all_data as all_data_now, bot
 # verify_proxy_on_ipinfo
 from verify import check_proxies_from_document, \
-    verify_proxy_on_site_list, verify_proxy_on_ipinfo_w_time_time, verify_geonode_free_residential
+    verify_proxy_on_site_list, verify_proxy_on_ipinfo_w_time_time, verify_residential_proxy
 from data import AllData
 from helpers import exc_to_str
 
@@ -33,11 +33,14 @@ def handle_request():
 def handle_info(m: Message):
     bot.send_message(
         chat_id=m.chat.id,
-        text=all_data.data_str + f"\nLast {all_data.data['checked_file_name']}:",
+        text=all_data.data_str + f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nLast {all_data.data['checked_file_name']}:",
         parse_mode=all_data.mode,
         disable_web_page_preview=True
     )
-    bot.send_document(m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb'))
+    try:
+        bot.send_document(m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb'))
+    except Exception as e:
+        bot.send_message(m.chat.id, f"No file.\n{e}")
 
 def define_handlers_of_dynamic_commands():
 
@@ -55,17 +58,26 @@ def define_handlers_of_dynamic_commands():
     @bot.message_handler(commands=[all_data.data['command_for_ip_info']])
     def handle_ip_info_check(m: Message):
         proxy_args = m.text[len(all_data.data['command_for_ip_info']) + 2:].split(' --')
-        if len(proxy_args) == 2 and proxy_args[1] == "d":
-            func = verify_geonode_free_residential
-        else:
-            func = verify_proxy_on_ipinfo_w_time_time
         answer_message_id = bot.send_message(m.chat.id, f"Trying to verify {proxy_args[0]}...").id
         thread = threading.Thread(
             target=perform_ip_info_check, args=(
                 m.chat.id,
                 answer_message_id,
-                proxy_args[0],
-                func
+                proxy_args[0]
+            )
+        )
+        thread.start()
+
+    @bot.message_handler(commands=[all_data.data['command_for_residential_ip_info']])
+    def handle_residential_ip_info_check(m: Message):
+        # proxy = m.text[len(all_data.data['command_for_residential_ip_info']) + 2:]
+        # answer_message_id = bot.send_message(m.chat.id, f"Trying to verify {proxy}...").id
+        answer_message_id = bot.send_message(m.chat.id, f"Trying to verify...").id
+        thread = threading.Thread(
+            target=perform_ip_info_check, args=(
+                m.chat.id,
+                answer_message_id,
+                # proxy
             )
         )
         thread.start()
@@ -82,12 +94,21 @@ def define_handlers_of_dynamic_commands():
         )
         thread.start()
 
-def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_data, function):
-    # proxy_ip_port_list = proxy_ip_port.split(':')
+def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_data):
     if ':' in proxy_data:
-        text = function(proxy_data)[1]
+        text = verify_proxy_on_ipinfo_w_time_time(proxy_data)[1]
     else:
         text = "Please, provide something to check in the correct format."
+
+    bot.edit_message_text(
+        text=text,
+        chat_id=chat_id,
+        message_id=id_of_message_to_change
+    )
+
+def perform_residential_ip_info_check(chat_id, id_of_message_to_change):
+    text = verify_residential_proxy(all_data.data['residential_username'], all_data.data['residential_password'])
+
 
     bot.edit_message_text(
         text=text,
