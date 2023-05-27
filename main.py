@@ -31,16 +31,22 @@ def handle_request():
 
 @bot.message_handler(commands=['info'])
 def handle_info(m: Message):
+    answer_text = all_data.data_str + f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\n"
+    message_id_to_answer = m.message_id
+    try:
+        message_id_to_answer = bot.send_document(
+            m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb')).message_id
+        answer_text += f"Last {all_data.data['checked_file_name']}:"
+    except FileNotFoundError:
+        answer_text += "Seems like there is no checked file on server yet. Try to make it"
     bot.send_message(
         chat_id=m.chat.id,
-        text=all_data.data_str + f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nLast {all_data.data['checked_file_name']}:",
+        text=answer_text,
+        reply_to_message_id=message_id_to_answer,
         parse_mode=all_data.mode,
         disable_web_page_preview=True
     )
-    try:
-        bot.send_document(m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb'))
-    except Exception as e:
-        bot.send_message(m.chat.id, f"No file.\n{e}")
+
 
 def define_handlers_of_dynamic_commands():
 
