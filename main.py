@@ -1,6 +1,7 @@
 # Python default packages
 import os
 import threading
+import time
 
 # External packages
 import telebot
@@ -31,15 +32,18 @@ def handle_request():
 
 @bot.message_handler(commands=['info'])
 def handle_info(m: Message):
-    answer_text = all_data.data_str + f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\n"
+    answer_text = all_data.data_str + \
+                  f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nSTARTED_TIME : {os.environ['STARTED_TIME']}\n\n" \
+                  f"Time went from program start : {time.time() - int(os.environ['STARTED_TIME_INT'])}\n\n"
     message_id_to_answer = m.message_id
+
     try:
         message_id_to_answer = bot.send_document(
             m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb')).message_id
         answer_text += f"Last {all_data.data['checked_file_name']}:"
     except FileNotFoundError:
         answer_text += "Seems like there is no checked file on server yet. Try to make it"
-    bot.send_message(
+    bot.enc_send_message(
         chat_id=m.chat.id,
         text=answer_text,
         reply_to_message_id=message_id_to_answer,
@@ -58,13 +62,13 @@ def define_handlers_of_dynamic_commands():
         global all_data
 
         all_data = AllData(mode=m.text[(len(all_data.data['command_for_update_data'])+2):])
-        bot.send_message(m.chat.id, f"Using {all_data.mode}. Updating by calling define()...")
+        bot.enc_send_message(m.chat.id, f"Using {all_data.mode}. Updating by calling define()...")
         define_handlers_of_dynamic_commands()
 
     @bot.message_handler(commands=[all_data.data['command_for_ip_info']])
     def handle_ip_info_check(m: Message):
         proxy_args = m.text[len(all_data.data['command_for_ip_info']) + 2:].split(' --')
-        answer_message_id = bot.send_message(m.chat.id, f"Trying to verify {proxy_args[0]}...").id
+        answer_message_id = bot.enc_send_message(m.chat.id, f"Trying to verify {proxy_args[0]}...").id
         thread = threading.Thread(
             target=perform_ip_info_check, args=(
                 m.chat.id,
@@ -76,7 +80,7 @@ def define_handlers_of_dynamic_commands():
 
     @bot.message_handler(commands=[all_data.data['command_for_site_list']])
     def handle_site_list_check(m: Message):
-        answer_message_id = bot.send_message(m.chat.id, "Trying to verify on a site list...").id
+        answer_message_id = bot.enc_send_message(m.chat.id, "Trying to verify on a site list...").id
         thread = threading.Thread(
             target=perform_site_list_check, args=(
                 m.chat.id,
@@ -123,7 +127,7 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
 
 @bot.message_handler(content_types=['document'])
 def handle_check_proxy_list_from_document(m: Message):
-    answer_message_id = bot.send_message(
+    answer_message_id = bot.enc_send_message(
         chat_id=m.chat.id,
         text="Trying to verify all the proxies in this file...",
         reply_to_message_id=m.message_id
@@ -167,7 +171,7 @@ def check_proxy_list_from_document(
 
     result = check_proxies_from_document(raw_file_path, portion, condition)
     if len(result) == 2:
-        bot.send_message(
+        bot.enc_send_message(
             chat_id=chat_id,
             text=exc_to_str(result[0], title="An error occurred (Failed to verify all. Going to try to send "
                                              "the broken file):\n\n")

@@ -52,10 +52,7 @@ def verify_proxy_on_ipinfo_w_time_time(
                proxy_data
 
     except Exception as e:
-        try:
-            return False, f"Didnt work;{exc_to_str(e)}", proxy_data
-        except Exception as er:
-            return False, f"Didnt wotk;The exc to str didnt work as well.\n\n{e}\n\n{er}", proxy_data
+        return False, f"Didnt work;{exc_to_str(e)}", proxy_data
 
 def verify_proxy_on_site_list(
         proxy_ip: str, proxy_port: str, site_list: list, delay_between: int = 0

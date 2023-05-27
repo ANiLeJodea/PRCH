@@ -7,7 +7,7 @@ import psycopg2
 # Project packages
 from helpers import pretify
 
-save_data: dict = None
+save_data = {}
 
 class AllData:
 
@@ -24,7 +24,7 @@ class AllData:
         self.data: dict = self.get_data()
         self.data_str: str = self.data_to_str()
 
-    def get_data(self) -> dict:
+    def get_data(self, include_last_kwargs: bool = False) -> dict:
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor()
         cur.execute("""SELECT * FROM main_data""")
@@ -40,6 +40,12 @@ class AllData:
         all_data['admins'] = [d[0] for d in cur.fetchall()]
 
         global save_data
+
+        # if include_last_kwargs:
+        #     for k, v in self.last_kwargs.items():
+        #         all_data[k] = v
+        #         additional_data[k] = v
+
         save_data = all_data
 
         return all_data
