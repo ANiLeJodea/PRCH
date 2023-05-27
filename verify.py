@@ -11,48 +11,49 @@ from data import save_data as data
 from helpers import exc_to_str
 
 def verify_proxy_on_ipinfo(
-        proxy_ip_port: str
+        proxy_data: str
 ) -> tuple[bool, str, str]:
     try:
         # t = time.time()
         r = requests.get(
-            "https://ipinfo.io/ip", proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=data['timeout']
+            "https://ipinfo.io/ip", proxies={"http": proxy_data, "https": proxy_data}, timeout=data['timeout']
         )
         # time_taken = round(time.time() - t, 4)
         time_taken = r.elapsed.total_seconds()
         if r.status_code == 200:
-            if r.text in proxy_ip_port:
-                return True, f"Fully worked;Showed a pr ip: {r.text}\nTime taken: {time_taken}", proxy_ip_port
+            if r.text in proxy_data:
+                return True, f"Fully worked;Showed a pr ip: {r.text}\nTime taken: {time_taken}", proxy_data
             return False, f"Worked;Didnt show a pr ip\nthis_ip: {os.environ['THIS_IP']}" \
-                          f"\nr.text: {r.text}\nTime taken: {time_taken}", proxy_ip_port
+                          f"\nr.text: {r.text}\nTime taken: {time_taken}", proxy_data
         return False, \
-            f"Didnt work;Invalid r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken: {time_taken}", \
-            proxy_ip_port
+               f"Didnt work;Invalid r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken: {time_taken}", \
+               proxy_data
 
     except Exception as e:
-        return False, f"Didnt work;{exc_to_str(e)}", proxy_ip_port
+        return False, f"Didnt work;{exc_to_str(e)}", proxy_data
 
 def verify_proxy_on_ipinfo_w_time_time(
-        proxy_ip_port: str
+        proxy_data: str
 ) -> tuple[bool, str, str]:
     try:
         t = time.time()
         r = requests.get(
-            "https://ipinfo.io/ip", proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=data['timeout']
+            "https://ipinfo.io/ip", proxies={"http": proxy_data, "https": proxy_data}, timeout=data['timeout']
         )
         time_taken_t = round(time.time() - t, 4)
         time_taken_r = r.elapsed.total_seconds()
         if r.status_code == 200:
-            if r.text in proxy_ip_port:
-                return True, f"Fully worked;Showed a pr ip: {r.text}\nTime taken t: {time_taken_t}\nTime taken r: {time_taken_r}", proxy_ip_port
+            if r.text in proxy_data:
+                return True, f"Fully worked;Showed a pr ip: {r.text}\nTime taken t: {time_taken_t}\nTime taken r: {time_taken_r}", proxy_data
             return False, f"Worked;Didnt show a pr ip\nthis_ip: {os.environ['THIS_IP']}" \
-                          f"\nr.text: {r.text}\nTime taken t: {time_taken_t}\nTime taken r: {time_taken_r}", proxy_ip_port
+                          f"\nr.text: {r.text}\nTime taken t: {time_taken_t}\nTime taken r: {time_taken_r}", proxy_data
         return False, \
-            f"Didnt work;Invalid r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken t: {time_taken_t}\nTime taken r: {time_taken_r}", \
-            proxy_ip_port
+               f"Didnt work;Invalid r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken t: {time_taken_t}\nTime taken r: {time_taken_r}", \
+               proxy_data
 
     except Exception as e:
-        return False, f"Didnt work;{exc_to_str(e)}", proxy_ip_port
+        # return False, f"Didnt work;{exc_to_str(e)}", proxy_data
+        return False, f"Didnt wotk;{e}", proxy_data
 
 def verify_proxy_on_site_list(
         proxy_ip: str, proxy_port: str, site_list: list, delay_between: int = 0
@@ -98,3 +99,11 @@ def check_proxies_from_document(
     except Exception as e:
         return e, name_with_date
     return name_with_date
+
+def verify_geonode_free_residential(
+        username: str, password: str,
+        geonode_dns: str = "premium-residential.geonode.com:9000",
+):
+    return verify_proxy_on_ipinfo_w_time_time("http://{}:{}@{}".format(username, password, geonode_dns))
+
+
