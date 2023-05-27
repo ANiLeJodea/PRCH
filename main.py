@@ -15,9 +15,7 @@ from verify import check_proxies_from_document, \
 from data import AllData
 from helpers import exc_to_str
 
-# all_data = AllData() if all_data_now is None else all_data_now
 all_data = all_data_now
-# bot.send_message(chat_id=os.environ['LOG_FORUM_ID'], message_thread_id=os.environ['LOG_TOPIC_ID'], text=f"")
 
 app = Flask(__name__)
 
@@ -31,31 +29,51 @@ def handle_request():
     return "OK"
 
 
-@bot.message_handler(commands=['update_data'])
-def handle_update_data(m: Message):
-    global all_data
-    all_data = AllData()
-    bot.send_message(m.chat.id, f"Successfully updated data")
-
 @bot.message_handler(commands=['info'])
-def handle_start(m: Message):
+def handle_info(m: Message):
     bot.send_message(
-        m.chat.id,
-        all_data.data_str + f"\nLast {all_data.data['checked_file_name']}:"
+        chat_id=m.chat.id,
+        text=all_data.data_str + f"\nLast {all_data.data['checked_file_name']}:",
+        parse_mode=all_data.mode
     )
     bot.send_document(m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb'))
 
-@bot.message_handler(commands=[all_data.data['command_for_ip_info']])
-def handle_ip_info_check(m: Message):
-    answer_message_id = bot.send_message(m.chat.id, "Trying to verify...").id
-    thread = threading.Thread(
-        target=perform_ip_info_check, args=(
-            m.chat.id,
-            answer_message_id,
-            m.text[len(all_data.data['command_for_ip_info']) + 2:]
+def define_handlers_of_dynamic_commands():
+
+    global all_data
+
+    @bot.message_handler(commands=all_data.data['command_for_update_data'])
+    def handle_update_data(m: Message):
+
+        global all_data
+
+        all_data = AllData(mode=m.text[(len(all_data.data['command_for_update_data'])+2)])
+        bot.send_message(m.chat.id, f"Using {all_data.mode}. Updating by calling define()...")
+        define_handlers_of_dynamic_commands()
+
+    @bot.message_handler(commands=[all_data.data['command_for_ip_info']])
+    def handle_ip_info_check(m: Message):
+        answer_message_id = bot.send_message(m.chat.id, "Trying to verify...").id
+        thread = threading.Thread(
+            target=perform_ip_info_check, args=(
+                m.chat.id,
+                answer_message_id,
+                m.text[len(all_data.data['command_for_ip_info']) + 2:]
+            )
         )
-    )
-    thread.start()
+        thread.start()
+
+    @bot.message_handler(commands=[all_data.data['command_for_site_list']])
+    def handle_site_list_check(m: Message):
+        answer_message_id = bot.send_message(m.chat.id, "Trying to verify on a site list...").id
+        thread = threading.Thread(
+            target=perform_site_list_check, args=(
+                m.chat.id,
+                answer_message_id,
+                m.text[len(all_data.data['command_for_site_list']) + 2:]
+            )
+        )
+        thread.start()
 
 def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_ip_port):
     # proxy_ip_port_list = proxy_ip_port.split(':')
@@ -69,19 +87,6 @@ def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_ip_port):
         chat_id=chat_id,
         message_id=id_of_message_to_change
     )
-
-
-@bot.message_handler(commands=[all_data.data['command_for_site_list']])
-def handle_site_list_check(m: Message):
-    answer_message_id = bot.send_message(m.chat.id, "Trying to verify on a site list...").id
-    thread = threading.Thread(
-        target=perform_site_list_check, args=(
-            m.chat.id,
-            answer_message_id,
-            m.text[len(all_data.data['command_for_site_list']) + 2:]
-        )
-    )
-    thread.start()
 
 def perform_site_list_check(chat_id, id_of_message_to_change, args):
     args_list: list = args.split(':')
@@ -125,7 +130,7 @@ def handle_check_proxy_list_from_document(m: Message):
         else:
             try:
                 portion = int(arguments[0])
-            except TypeError:
+            except ValueError:
                 bot.edit_message_text(
                     chat_id=m.chat.id, message_id=answer_message_id,
                     text="The caption of this message is not 'no' and I was not able to convert it to an integer.\n"
@@ -170,6 +175,7 @@ def check_proxy_list_from_document(
         )
 
 if __name__ == "__main__":
+    define_handlers_of_dynamic_commands()
     app.run("0.0.0.0", port=os.getenv("PORT", 3000))
 
 

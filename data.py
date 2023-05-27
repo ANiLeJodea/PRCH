@@ -11,10 +11,15 @@ save_data: dict = None
 
 class AllData:
 
-    def __init__(self, dec_text: str = "*"):
+    def __init__(self, mode: str = 'markdown'):
+        self.mode = mode if mode in ['html', 'markdown'] else 'markdown'
+        if self.mode == 'markdown':
+            self.dec_text_start = self.dec_text_end = '**'
+        else:
+            self.dec_text_start = '<strong>'
+            self.dec_text_end = '</strong>'
         self.data: dict = self.get_data()
-        self.dec_text = dec_text
-        self.data_str: str = self.data_to_str(self.dec_text)
+        self.data_str: str = self.data_to_str()
 
     def get_data(self) -> dict:
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
@@ -36,9 +41,11 @@ class AllData:
 
         return all_data
 
-    def data_to_str(self, dec_text: str) -> str:
+    def data_to_str(self) -> str:
         return "ALL DATA:\n{}".format(
-            self.data['separator'].join("{}{}{} ::\n{}".format(dec_text, key, dec_text,
-                                                               pretify(data, dec_text=dec_text))
+            self.data['separator'].join("{}{}{} ::\n{}".format(self.dec_text_start, key, self.dec_text_end,
+                                                               pretify(data,
+                                                                       dec_text_start=self.dec_text_start,
+                                                                       dec_text_end=self.dec_text_end))
                                         for key, data in self.data.items())
         )
