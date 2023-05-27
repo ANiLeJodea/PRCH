@@ -2,10 +2,10 @@
 import traceback
 
 
-def exc_to_str(exception: Exception, title: str = "EXCEPTION:\n\n", limit: int = 2, separator: str = "") -> str:
+def exc_to_str(exc: Exception, title: str = "EXCEPTION:\n\n", limit: int = 2, separator: str = "") -> str:
     if title is None:
         title = ""
-    return title + separator.join(traceback.format_exception(exception, limit=limit))
+    return title + separator.join(traceback.format_exception(type(exc), exc, exc.__traceback__, limit=limit))
 
 def pretify(arg, dec_text_start: str = '<strong>', dec_text_end: str = '</strong>'):
     t = type(arg)

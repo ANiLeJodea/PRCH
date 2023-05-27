@@ -102,10 +102,4 @@ def check_proxies_from_document(
         return e, name_with_date
     return name_with_date
 
-def verify_residential_proxy(
-        username: str, password: str,
-        geonode_dns: str = "premium-residential.geonode.com:9000",
-):
-    return verify_proxy_on_ipinfo_w_time_time("http://{}:{}@{}".format(username, password, geonode_dns))
-
 
