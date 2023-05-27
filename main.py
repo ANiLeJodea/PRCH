@@ -34,7 +34,8 @@ def handle_info(m: Message):
     bot.send_message(
         chat_id=m.chat.id,
         text=all_data.data_str + f"\nLast {all_data.data['checked_file_name']}:",
-        parse_mode=all_data.mode
+        parse_mode=all_data.mode,
+        disable_web_page_preview=True
     )
     bot.send_document(m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb'))
 

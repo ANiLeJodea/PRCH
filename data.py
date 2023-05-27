@@ -16,8 +16,12 @@ class AllData:
         if self.mode == 'html':
             self.dec_text_start = '<strong>'
             self.dec_text_end = '</strong>'
+            self.separator = "<br>"
         else:
             self.dec_text_start = self.dec_text_end = '**'
+            self.separator = """
+
+"""
         self.data: dict = self.get_data()
         self.data_str: str = self.data_to_str()
 
@@ -43,9 +47,7 @@ class AllData:
 
     def data_to_str(self) -> str:
         return "ALL DATA:\n{}".format(
-            self.data['separator'].join("{}{}{} ::\n{}".format(self.dec_text_start, key, self.dec_text_end,
-                                                               pretify(data,
-                                                                       dec_text_start=self.dec_text_start,
-                                                                       dec_text_end=self.dec_text_end))
-                                        for key, data in self.data.items())
+            self.separator.join("{}{}{} ::\n{}".format(self.dec_text_start, key, self.dec_text_end,
+                                pretify(data, dec_text_start=self.dec_text_start, dec_text_end=self.dec_text_end))
+                                for key, data in self.data.items())
         )
