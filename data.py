@@ -53,5 +53,5 @@ class AllData:
     def data_to_str(self) -> str:
         return "ALL DATA:\n\n" + \
             self.separator.join("{}{}{} :: {}".format(self.dec_text_start, key, self.dec_text_end,
-                                pretify(data, dec_text_start=self.dec_text_start, dec_text_end=self.dec_text_end))
+                                pretify(data, self.dec_text_start, self.dec_text_end))
                                 for key, data in self.data.items())
