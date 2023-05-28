@@ -21,12 +21,14 @@ class EncTeleBot(TeleBot):
             timeout: int = None,
             message_thread_id: int = None
     ) -> list[types.Message]:
+        to_return = []
         for t in util.smart_split(text=text):
-            yield self.send_message(
+            to_return.append(self.send_message(
                 chat_id=chat_id, text=t, parse_mode=parse_mode, disable_web_page_preview=disable_web_page_preview,
                 reply_to_message_id=reply_to_message_id, timeout=timeout, message_thread_id=message_thread_id
-            )
+            ))
             time.sleep(2)
+        return to_return
 
 bot = EncTeleBot(token=environ["BOT_TOKEN"])
 all_data = AllData()

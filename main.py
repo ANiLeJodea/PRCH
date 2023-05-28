@@ -62,13 +62,13 @@ def define_handlers_of_dynamic_commands():
         global all_data
 
         all_data = AllData(mode=m.text[(len(all_data.data['command_for_update_data'])+2):])
-        bot.enc_send_message(m.chat.id, f"Using {all_data.mode}. Updating by calling define()...")
+        bot.send_message(m.chat.id, f"Using {all_data.mode}. Updating by calling define()...")
         define_handlers_of_dynamic_commands()
 
     @bot.message_handler(commands=[all_data.data['command_for_ip_info']])
     def handle_ip_info_check(m: Message):
         proxy = m.text[len(all_data.data['command_for_ip_info']) + 2:]
-        answer_message_id = bot.enc_send_message(m.chat.id, f"Trying to verify {proxy}...").id
+        answer_message_id = bot.send_message(m.chat.id, f"Trying to verify {proxy}...").id
         thread = threading.Thread(
             target=perform_ip_info_check, args=(
                 m.chat.id,
@@ -80,7 +80,7 @@ def define_handlers_of_dynamic_commands():
 
     @bot.message_handler(commands=[all_data.data['command_for_site_list']])
     def handle_site_list_check(m: Message):
-        answer_message_id = bot.enc_send_message(m.chat.id, "Trying to verify on a site list...").id
+        answer_message_id = bot.send_message(m.chat.id, "Trying to verify on a site list...").id
         thread = threading.Thread(
             target=perform_site_list_check, args=(
                 m.chat.id,
@@ -127,7 +127,7 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
 
 @bot.message_handler(content_types=['document'])
 def handle_check_proxy_list_from_document(m: Message):
-    answer_message_id = bot.enc_send_message(
+    answer_message_id = bot.send_message(
         chat_id=m.chat.id,
         text="Trying to verify all the proxies in this file...",
         reply_to_message_id=m.message_id
