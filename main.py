@@ -11,11 +11,9 @@ from flask import Flask, request
 
 # Project packages
 from setup import all_data as all_data_now, bot
-# verify_proxy_on_ipinfo
 from verify import check_proxies_from_document, \
-    verify_proxy_on_site_list, verify_proxy_on_ipinfo_w_time_time
+    verify_proxy_on_site_list, verify_proxy_on_ipinfo
 from data import AllData
-# from helpers import exc_to_str
 
 all_data = all_data_now
 
@@ -52,11 +50,6 @@ def handle_info(m: Message):
         parse_mode=all_data.mode,
         disable_web_page_preview=True
     )
-
-# @bot.message_handler(commands=['get'])
-# def handle_general_get(m: Message):
-#     d = all_data.data.get(m.text[5:])
-#     bot.send_message(m.chat.id, f"{d}\n{type(d)}")
 
 def define_handlers_of_dynamic_commands():
 
@@ -98,7 +91,7 @@ def define_handlers_of_dynamic_commands():
 
 def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_data):
     if ':' in proxy_data:
-        text = verify_proxy_on_ipinfo_w_time_time(proxy_data, timeout=all_data.data['timeout'])[1]
+        text = verify_proxy_on_ipinfo(proxy_data, timeout=all_data.data['timeout'])[1]
     else:
         text = "Please, provide something to check in the correct format."
 
