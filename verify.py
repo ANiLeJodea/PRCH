@@ -78,22 +78,19 @@ def verify_proxy_on_site_list(
     return test_results
 
 def check_proxies_from_document(
-        checked_file_name: str, raw_file_path: str, portion: int = 100, condition: bool = None
+        checked_file_name: str, raw_file_path: str, timeout: float, portion: int = 100, not_desired: bool = None
 ) -> tuple[bool, str]:
     try:
         path_with_date = f"{checked_file_name}_{time.strftime('%H:%M:%S %d/%m/%Y')}.txt"
         with open(raw_file_path, 'r') as fr, \
                 open(checked_file_name + ".txt", 'w') as fw, \
                 ThreadPoolExecutor(max_workers=portion) as executor:
-            if condition is not None:
-                fw.write("\n\n".join(f"{proxy} -> {text}"
-                                     for bool_result, text, proxy in
-                                     executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())
-                                     if bool_result is condition))
-            else:
-                fw.write("\n\n".join(f"{proxy} -> {text}"
-                                     for bool_result, text, proxy in
-                                     executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())))
+            proxies = fr.read().splitlines()
+            fw.write("\n\n".join(f"{proxy} -> {text}"
+                                 for bool_result, text, proxy in
+                                 executor.map(verify_proxy_on_ipinfo_w_time_time, proxies, [timeout] * len(proxies))
+                                 if bool_result is not not_desired))
+
     except Exception as e:
         return False, exc_to_str(e)
 

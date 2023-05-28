@@ -145,7 +145,7 @@ def handle_check_proxy_list_from_document(m: Message):
         arguments = str(m.caption).split(';')
         filter_condition = None
         if len(arguments) == 2:
-            filter_condition = bool(arguments[1])
+            filter_condition = not bool(arguments[1])
         if arguments[0].lower() == "no":
             portion = None
         else:
@@ -170,16 +170,18 @@ def handle_check_proxy_list_from_document(m: Message):
         )
 
 def check_proxy_list_from_document(
-    chat_id, telegram_raw_file_path: str, portion: int, condition: bool
+    chat_id, telegram_raw_file_path: str, portion: int, not_desired: bool
 ):
     try:
         raw_file_path = all_data.data['raw_file_name'] + '.txt'
-        bot.send_message(chat_id, f"opening file with {raw_file_path}, {portion}, {condition}")
+        # bot.send_message(chat_id, f"opening file with {raw_file_path}, {portion}, {not_desired}")
         with open(raw_file_path, 'wb') as f:
             f.write(bot.download_file(telegram_raw_file_path))
 
-        bot.send_message(chat_id, f"Calling check_proxies_from_document()...")
-        result = check_proxies_from_document(all_data.data['checked_file_name'], raw_file_path, portion, condition)
+        # bot.send_message(chat_id, f"Calling check_proxies_from_document()...")
+        result = check_proxies_from_document(
+            all_data.data['checked_file_name'], raw_file_path, all_data.data['timeout'], portion, not_desired
+        )
         if result[0]:
             bot.send_document(
                 chat_id=chat_id,
