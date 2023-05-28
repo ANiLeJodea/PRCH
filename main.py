@@ -56,6 +56,12 @@ def handle_info(m: Message):
             chat_id=m.chat.id,
             text=exc_to_str(e, title="An exception occurred:\n\n"),
         )
+        bot.enc_send_message(
+            chat_id=m.chat.id,
+            text=answer_text,
+            reply_to_message_id=message_id_to_answer,
+            disable_web_page_preview=True
+        )
 
 
 def define_handlers_of_dynamic_commands():

@@ -15,7 +15,8 @@ def exc_to_str(
 def pretify(arg, dec_text_start: str = '<strong>', dec_text_end: str = '</strong>'):
     t = type(arg)
     if t in [list, tuple]:
-        return f'\n{t} : ' + ' ; '.join(f'''{dec_text_start}{a}{dec_text_end} ({str(type(a)).split("'")[1]})''' for a in arg[:3])
+        return f'\n{t} : ' + ' ; '.join(f'''{dec_text_start}{a}{dec_text_end} ({str(type(a)).split("'")[1]})'''
+                                        for a in arg[:3])
     elif t == "dict":
         return f'{t} : ' + ' ; '.join(f"""{dec_text_start}{k}{dec_text_end} : {dec_text_start}{v}{dec_text_end} 
         ({str(type(v)).split("'")[1]})"""
