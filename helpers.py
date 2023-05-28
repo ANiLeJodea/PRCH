@@ -12,16 +12,16 @@ def exc_to_str(
         type(exc), exc, exc.__traceback__,
         limit=limit, chain=chain))
 
-def pretify(arg, dec_text_start: str = '<strong>', dec_text_end: str = '</strong>'):
+def pretify(arg, dec_start: str = '<strong>', dec_end: str = '</strong>'):
     t = type(arg)
     if t in [list, tuple]:
-        return f'\n{t} : ' + ' ; '.join(
-            f'''{dec_text_start}{a}{dec_text_end} ({str(type(a)).split("'")[1].replace('<', '~').replace('>', '~')})'''
+        return f'''\n{str(t).split("'")[1]} : ''' + ' ; '.join(
+            f'''{dec_start}{a}{dec_end} ({str(type(a)).split("'")[1]})'''
             for a in arg[:3])
-    elif t == "dict":
-        return f'{t} : ' + ' ; '.join(f"""{dec_text_start}{k}{dec_text_end} : {dec_text_start}{v}{dec_text_end} 
-        ({str(type(v)).split("'")[1].replace('<', '~').replace('>', '~')})"""
-                                      for k, v in arg.items()[:3])
+    elif t == dict:
+        return f'''{str(t).split("'")[1]} : ''' + ' ; '.join(
+            f"""{dec_start}{k}{dec_end} : {dec_start}{v}{dec_end} ({str(type(v)).split("'")[1]})"""
+            for k, v in arg.items()[:3])
     else:
-        return f"{dec_text_start}{arg}{dec_text_end}"
+        return f"{dec_start}{arg}{dec_end}"
 
