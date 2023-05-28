@@ -32,30 +32,30 @@ def handle_request():
 
 @bot.message_handler(commands=['info'])
 def handle_info(m: Message):
-    # try:
-    answer_text = all_data.data_str + \
-                  f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nSTARTED_TIME : {os.environ['TIME_STARTED']}\n\n" \
-                  f"Time went from program start : {round(time.time() - float(os.environ['TIME_STARTED_INT']), 4)}\n\n"
-    message_id_to_answer = m.message_id
-
     try:
-        message_id_to_answer = bot.send_document(
-            m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb')).message_id
-        answer_text += f"Last {all_data.data['checked_file_name']}:"
-    except FileNotFoundError:
-        answer_text += "Seems like there is no checked file on server yet. Try to make it"
-    bot.enc_send_message(
-        chat_id=m.chat.id,
-        text=answer_text,
-        reply_to_message_id=message_id_to_answer,
-        parse_mode=all_data.mode,
-        disable_web_page_preview=True
-    )
-    # except Exception as e:
-    #     bot.send_message(
-    #         chat_id=m.chat.id,
-    #         text=exc_to_str(e, title="An exception occurred:\n\n"),
-    #     )
+        answer_text = all_data.data_str + \
+                      f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nSTARTED_TIME : {os.environ['TIME_STARTED']}\n\n" \
+                      f"Time went from program start : {round(time.time() - float(os.environ['TIME_STARTED_INT']), 4)}\n\n"
+        message_id_to_answer = m.message_id
+
+        try:
+            message_id_to_answer = bot.send_document(
+                m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb')).message_id
+            answer_text += f"Last {all_data.data['checked_file_name']}:"
+        except FileNotFoundError:
+            answer_text += "Seems like there is no checked file on server yet. Try to make it"
+        bot.enc_send_message(
+            chat_id=m.chat.id,
+            text=answer_text,
+            reply_to_message_id=message_id_to_answer,
+            parse_mode=all_data.mode,
+            disable_web_page_preview=True
+        )
+    except Exception as e:
+        bot.send_message(
+            chat_id=m.chat.id,
+            text=exc_to_str(e, title="An exception occurred:\n\n"),
+        )
 
 
 def define_handlers_of_dynamic_commands():
