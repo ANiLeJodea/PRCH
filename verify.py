@@ -7,19 +7,18 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 
 # Project packages
-from data import save_data as data
 from helpers import exc_to_str
 
 def verify_proxy_on_ipinfo(
-        proxy_data: str
+        proxy_data: str, timeout: float
 ) -> tuple[bool, str, str]:
     try:
         # t = time.time()
         r = requests.get(
-            "https://ipinfo.io/ip", proxies={"http": proxy_data, "https": proxy_data}, timeout=data['timeout']
+            "https://ipinfo.io/ip", proxies={"http": proxy_data, "https": proxy_data}, timeout=timeout
         )
         # time_taken = round(time.time() - t, 4)
-        time_taken = r.elapsed.total_seconds()
+        time_taken = round(r.elapsed.total_seconds(), 4)
         if r.status_code == 200:
             if r.text in proxy_data:
                 return True, f"Fully worked;Showed a pr ip: {r.text}\nTime taken: {time_taken}", proxy_data
@@ -33,15 +32,15 @@ def verify_proxy_on_ipinfo(
         return False, f"Didnt work;{exc_to_str(e)}", proxy_data
 
 def verify_proxy_on_ipinfo_w_time_time(
-        proxy_data: str
+        proxy_data: str, timeout: float
 ) -> tuple[bool, str, str]:
     try:
         t = time.time()
         r = requests.get(
-            "https://ipinfo.io/ip", proxies={"http": proxy_data, "https": proxy_data}, timeout=data['timeout']
+            "https://ipinfo.io/ip", proxies={"http": proxy_data, "https": proxy_data}, timeout=timeout
         )
         time_taken_t = round(time.time() - t, 4)
-        time_taken_r = r.elapsed.total_seconds()
+        time_taken_r = round(r.elapsed.total_seconds(), 4)
         if r.status_code == 200:
             if r.text in proxy_data:
                 return True, f"Fully worked;Showed a pr ip: {r.text}\nTime taken t: {time_taken_t}\nTime taken r: {time_taken_r}", proxy_data
@@ -55,17 +54,17 @@ def verify_proxy_on_ipinfo_w_time_time(
         return False, f"Didnt work;{exc_to_str(e)}", proxy_data
 
 def verify_proxy_on_site_list(
-        proxy_ip: str, proxy_port: str, site_list: list, delay_between: int = 0
+        proxy_ip: str, proxy_port: str, timeout: float, site_list: list, delay_between: int = 0
 ) -> dict:
     test_results = {}
     proxy_ip_port = f"{proxy_ip}:{proxy_port}"
     for site in site_list:
         try:
             # t = time.time()
-            r = requests.get(site, proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=data['timeout'])
+            r = requests.get(site, proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=timeout)
 
             # time_taken = round(time.time() - t, 4)
-            time_taken = r.elapsed.total_seconds()
+            time_taken = round(r.elapsed.total_seconds(), 4)
             if r.status_code == 200:
                 test_results[site] = (True, f"Fully worked;Time taken: {time_taken}")
             else:
@@ -79,12 +78,12 @@ def verify_proxy_on_site_list(
     return test_results
 
 def check_proxies_from_document(
-        raw_file_path: str, portion: int = 100, condition: bool = None
+        checked_file_name: str, raw_file_path: str, portion: int = 100, condition: bool = None
 ) -> tuple[bool, str]:
     try:
-        name_with_date = f"{data['checked_file_name']}_{time.strftime('%H:%M:%S %d/%m/%Y')}.txt"
+        path_with_date = f"{checked_file_name}_{time.strftime('%H:%M:%S %d/%m/%Y')}.txt"
         with open(raw_file_path, 'r') as fr, \
-                open(data['checked_file_name'] + ".txt", 'w') as fw, \
+                open(checked_file_name + ".txt", 'w') as fw, \
                 ThreadPoolExecutor(max_workers=portion) as executor:
             if condition is not None:
                 fw.write("\n\n".join(f"{proxy} -> {text}"
@@ -97,6 +96,7 @@ def check_proxies_from_document(
                                      executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())))
     except Exception as e:
         return False, exc_to_str(e)
-    return True, name_with_date
+
+    return True, path_with_date
 
 

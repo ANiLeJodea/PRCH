@@ -34,7 +34,8 @@ def handle_request():
 def handle_info(m: Message):
     answer_text = all_data.data_str + \
                   f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nSTARTED_TIME : {os.environ['TIME_STARTED']}\n\n" \
-                  f"Secs have passed from program start : {round(time.time() - float(os.environ['TIME_STARTED_INT']), 4)}\n\n"
+                  "Secs have passed from program start : " \
+                  f"{round(time.time() - float(os.environ['TIME_STARTED_INT']), 4)}\n\n"
     message_id_to_answer = m.message_id
 
     try:
@@ -92,7 +93,7 @@ def define_handlers_of_dynamic_commands():
 
 def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_data):
     if ':' in proxy_data:
-        text = verify_proxy_on_ipinfo_w_time_time(proxy_data)[1]
+        text = verify_proxy_on_ipinfo_w_time_time(proxy_data, timeout=all_data.data['timeout'])[1]
     else:
         text = "Please, provide something to check in the correct format."
 
@@ -113,7 +114,10 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
         elif args_list_len == 3:
             proxy_ip, proxy_port, sites = args_list
             sites_list = [f'https://{s}' for s in sites.split(',')]
-        for site_name, result in verify_proxy_on_site_list(proxy_ip, proxy_port, sites_list).items():
+        for site_name, result in verify_proxy_on_site_list(
+                proxy_ip, proxy_port, all_data.data['timeout'],
+                sites_list, all_data.data['delay_between']
+        ).items():
             text += f"Site {site_name}::\n{result[1]}\n\n"
     else:
         text = "Please, provide something to check in the correct format."
@@ -179,7 +183,8 @@ def check_proxy_list_from_document(
         with open(raw_file_path, 'wb') as f:
             f.write(bot.download_file(telegram_raw_file_path))
 
-        result = check_proxies_from_document(raw_file_path, portion, condition)
+        bot.send_message(chat_id, f"Calling check_proxies_from_document with {raw_file_path}, {portion}, {condition}")
+        result = check_proxies_from_document(all_data.data['checked_file_name'], raw_file_path, portion, condition)
         if result[0]:
             bot.send_document(
                 chat_id=chat_id,
