@@ -163,17 +163,10 @@ def handle_check_proxy_list_from_document(m: Message):
             text=f"Handled that the raw file is\n{raw_file}\n, that the arguments are "
                  f"{arguments}\nPortion = {portion}\nfilter_condition: {filter_condition}"
         )
-        try:
-            thread = threading.Thread(
-                target=check_proxies_from_document,
-                args=(m.chat.id, raw_file.file_path, portion, filter_condition)
-            )
-            thread.start()
-        except Exception as e:
-            bot.send_message(
-                chat_id=m.chat.id,
-                text=exc_to_str(e, title="An exception occurred:\n\n"),
-            )
+        thread = threading.Thread(
+            target=check_proxy_list_from_document,
+            args=(m.chat.id, raw_file.file_path, portion, filter_condition)
+        )
     else:
         bot.edit_message_text(
             chat_id=m.chat.id, message_id=answer_message_id,
@@ -184,13 +177,12 @@ def check_proxy_list_from_document(
     chat_id, telegram_raw_file_path: str, portion: int, condition: bool
 ):
     try:
-        bot.send_message(chat_id, f"here you")
         raw_file_path = all_data.data['raw_file_name'] + '.txt'
         bot.send_message(chat_id, f"opening file with {raw_file_path}, {portion}, {condition}")
         with open(raw_file_path, 'wb') as f:
             f.write(bot.download_file(telegram_raw_file_path))
 
-        bot.send_message(chat_id, f"Calling check_proxies_from_document with {raw_file_path}, {portion}, {condition}")
+        bot.send_message(chat_id, f"Calling check_proxies_from_document()...")
         result = check_proxies_from_document(all_data.data['checked_file_name'], raw_file_path, portion, condition)
         if result[0]:
             bot.send_document(
@@ -205,8 +197,7 @@ def check_proxy_list_from_document(
             )
     except Exception as e:
         bot.send_message(
-            chat_id=os.environ['LOG_FORUM_ID'],
-            message_thread_id=os.environ['LOG_TOPIC_ID'],
+            chat_id=chat_id,
             text=exc_to_str(e, title="An exception occurred:\n\n"),
         )
 
