@@ -143,10 +143,6 @@ def handle_check_proxy_list_from_document(m: Message):
     raw_file_type = raw_file.file_path.split('.')[-1]
     if raw_file_type == 'txt':
         arguments = str(m.caption).split(';')
-        bot.edit_message_text(
-            chat_id=m.chat.id, message_id=answer_message_id,
-            text=f"Handled that the type of this file is txt {raw_file_type} and that the arguments are {arguments}"
-        )
         filter_condition = None
         if len(arguments) == 2:
             filter_condition = bool(arguments[1])
@@ -164,14 +160,20 @@ def handle_check_proxy_list_from_document(m: Message):
                 portion = all_data.data['portion']
         bot.edit_message_text(
             chat_id=m.chat.id, message_id=answer_message_id,
-            text=f"Handled that the type of this file is {raw_file_type} and that the arguments are "
-                 f"{arguments}\nPortion = {portion}"
+            text=f"Handled that the raw file is\n{raw_file}\n, that the arguments are "
+                 f"{arguments}\nPortion = {portion}\nfilter_condition: {filter_condition}"
         )
-        thread = threading.Thread(
-            target=check_proxies_from_document,
-            args=(m.chat.id, raw_file.file_path, portion, filter_condition)
-        )
-        thread.start()
+        try:
+            thread = threading.Thread(
+                target=check_proxies_from_document,
+                args=(m.chat.id, raw_file.file_path, portion, filter_condition)
+            )
+            thread.start()
+        except Exception as e:
+            bot.send_message(
+                chat_id=m.chat.id,
+                text=exc_to_str(e, title="An exception occurred:\n\n"),
+            )
     else:
         bot.edit_message_text(
             chat_id=m.chat.id, message_id=answer_message_id,
