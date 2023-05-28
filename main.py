@@ -32,24 +32,30 @@ def handle_request():
 
 @bot.message_handler(commands=['info'])
 def handle_info(m: Message):
-    answer_text = all_data.data_str + \
-                  f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nSTARTED_TIME : {os.environ['STARTED_TIME']}\n\n" \
-                  f"Time went from program start : {round(time.time() - float(os.environ['STARTED_TIME_INT']), 4)}\n\n"
-    message_id_to_answer = m.message_id
-
     try:
-        message_id_to_answer = bot.send_document(
-            m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb')).message_id
-        answer_text += f"Last {all_data.data['checked_file_name']}:"
-    except FileNotFoundError:
-        answer_text += "Seems like there is no checked file on server yet. Try to make it"
-    bot.enc_send_message(
-        chat_id=m.chat.id,
-        text=answer_text,
-        reply_to_message_id=message_id_to_answer,
-        parse_mode=all_data.mode,
-        disable_web_page_preview=True
-    )
+        answer_text = all_data.data_str + \
+                      f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nSTARTED_TIME : {os.environ['STARTED_TIME']}\n\n" \
+                      f"Time went from program start : {round(time.time() - float(os.environ['STARTED_TIME_INT']), 4)}\n\n"
+        message_id_to_answer = m.message_id
+
+        try:
+            message_id_to_answer = bot.send_document(
+                m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb')).message_id
+            answer_text += f"Last {all_data.data['checked_file_name']}:"
+        except FileNotFoundError:
+            answer_text += "Seems like there is no checked file on server yet. Try to make it"
+        bot.enc_send_message(
+            chat_id=m.chat.id,
+            text=answer_text,
+            reply_to_message_id=message_id_to_answer,
+            parse_mode=all_data.mode,
+            disable_web_page_preview=True
+        )
+    except Exception as e:
+        bot.send_message(
+            chat_id=m.chat.id,
+            text=exc_to_str(e, title="An exception occurred:\n\n"),
+        )
 
 
 def define_handlers_of_dynamic_commands():
@@ -132,60 +138,72 @@ def handle_check_proxy_list_from_document(m: Message):
         text="Trying to verify all the proxies in this file...",
         reply_to_message_id=m.message_id
     ).id
-    raw_file = bot.get_file(m.document.file_id)
-    raw_file_type = raw_file.file_path.split('.')[-1]
-    if raw_file_type == 'txt':
-        arguments = m.caption.split(';')
-        filter_condition = None
-        if len(arguments) == 2:
-            filter_condition = bool(arguments[1])
-        if arguments[0].lower() == "no":
-            portion = None
+    try:
+        raw_file = bot.get_file(m.document.file_id)
+        raw_file_type = raw_file.file_path.split('.')[-1]
+        if raw_file_type == 'txt':
+            arguments = m.caption.split(';')
+            filter_condition = None
+            if len(arguments) == 2:
+                filter_condition = bool(arguments[1])
+            if arguments[0].lower() == "no":
+                portion = None
+            else:
+                try:
+                    portion = int(arguments[0])
+                except ValueError:
+                    bot.edit_message_text(
+                        chat_id=m.chat.id, message_id=answer_message_id,
+                        text="The caption of this message is not 'no' and I was not able to convert it to an integer.\n"
+                             f"Going to use the default value {all_data.data['portion']}"
+                    )
+                    portion = all_data.data['portion']
+            thread = threading.Thread(
+                target=check_proxies_from_document,
+                args=(m.chat.id, raw_file.file_path, portion, filter_condition)
+            )
+            thread.start()
         else:
-            try:
-                portion = int(arguments[0])
-            except ValueError:
-                bot.edit_message_text(
-                    chat_id=m.chat.id, message_id=answer_message_id,
-                    text="The caption of this message is not 'no' and I was not able to convert it to an integer.\n"
-                         f"Going to use the default value {all_data.data['portion']}"
-                )
-                portion = all_data.data['portion']
-        thread = threading.Thread(
-            target=check_proxies_from_document,
-            args=(m.chat.id, raw_file.file_path, portion, filter_condition)
-        )
-        thread.start()
-    else:
-        bot.edit_message_text(
-            chat_id=m.chat.id, message_id=answer_message_id,
-            text="Not supported file type. Unable to check. Try again with .txt file"
+            bot.edit_message_text(
+                chat_id=m.chat.id, message_id=answer_message_id,
+                text="Not supported file type. Unable to check. Try again with .txt file"
+            )
+    except Exception as e:
+        bot.send_message(
+            chat_id=m.chat.id,
+            text=exc_to_str(e, title="An exception occurred:\n\n"),
         )
 
 def check_proxy_list_from_document(
     chat_id: str, telegram_raw_file_path: str, portion: int, condition: bool
 ):
-    raw_file_path = all_data.data['raw_file_name'] + '.txt'
-    with open(raw_file_path, 'wb') as f:
-        f.write(bot.download_file(telegram_raw_file_path))
+    try:
+        raw_file_path = all_data.data['raw_file_name'] + '.txt'
+        with open(raw_file_path, 'wb') as f:
+            f.write(bot.download_file(telegram_raw_file_path))
 
-    result = check_proxies_from_document(raw_file_path, portion, condition)
-    if len(result) == 2:
-        bot.enc_send_message(
+        result = check_proxies_from_document(raw_file_path, portion, condition)
+        if len(result) == 2:
+            bot.enc_send_message(
+                chat_id=chat_id,
+                text=exc_to_str(result[0], title="An error occurred (Failed to verify all. Going to try to send "
+                                                 "the broken file):\n\n")
+            )
+            bot.send_document(
+                chat_id=chat_id,
+                document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
+                visible_file_name=f"Crashed {result[1]}"
+            )
+        else:
+            bot.send_document(
+                chat_id=chat_id,
+                document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
+                visible_file_name=result[0]
+            )
+    except Exception as e:
+        bot.send_message(
             chat_id=chat_id,
-            text=exc_to_str(result[0], title="An error occurred (Failed to verify all. Going to try to send "
-                                             "the broken file):\n\n")
-        )
-        bot.send_document(
-            chat_id=chat_id,
-            document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
-            visible_file_name=f"Crashed {result[1]}"
-        )
-    else:
-        bot.send_document(
-            chat_id=chat_id,
-            document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
-            visible_file_name=result[0]
+            text=exc_to_str(e, title="An exception occurred:\n\n"),
         )
 
 if __name__ == "__main__":
