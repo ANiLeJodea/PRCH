@@ -12,7 +12,7 @@ def exc_to_str(
         type(exc), exc, exc.__traceback__,
         limit=limit, chain=chain))
 
-def pretify(arg, dec_start: str = '<strong>', dec_end: str = '</strong>'):
+def prettify(arg, dec_start: str = '<strong>', dec_end: str = '</strong>'):
     t = type(arg)
     if t in [list, tuple]:
         return f'''\n{str(t).split("'")[1]} : ''' + ' ; '.join(

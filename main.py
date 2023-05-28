@@ -158,15 +158,11 @@ def handle_check_proxy_list_from_document(m: Message):
                          f" it to an integer.\nGoing to use the default value {all_data.data['portion']}"
                 )
                 portion = all_data.data['portion']
-        bot.edit_message_text(
-            chat_id=m.chat.id, message_id=answer_message_id,
-            text=f"Handled that the raw file is\n{raw_file}\n, that the arguments are "
-                 f"{arguments}\nPortion = {portion}\nfilter_condition: {filter_condition}"
-        )
         thread = threading.Thread(
             target=check_proxy_list_from_document,
             args=(m.chat.id, raw_file.file_path, portion, filter_condition)
         )
+        thread.start()
     else:
         bot.edit_message_text(
             chat_id=m.chat.id, message_id=answer_message_id,

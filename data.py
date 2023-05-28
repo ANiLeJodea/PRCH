@@ -5,7 +5,7 @@ import os
 import psycopg2
 
 # Project packages
-from helpers import pretify
+from helpers import prettify
 
 save_data = {}
 
@@ -41,11 +41,6 @@ class AllData:
 
         global save_data
 
-        # if include_last_kwargs:
-        #     for k, v in self.last_kwargs.items():
-        #         all_data[k] = v
-        #         additional_data[k] = v
-
         save_data = all_data
 
         return all_data
@@ -53,5 +48,5 @@ class AllData:
     def data_to_str(self) -> str:
         return "ALL DATA:\n\n" + \
             self.separator.join("{}{}{} :: {}".format(self.dec_text_start, key, self.dec_text_end,
-                                pretify(data, self.dec_text_start, self.dec_text_end))
+                                                      prettify(data, self.dec_text_start, self.dec_text_end))
                                 for key, data in self.data.items())
