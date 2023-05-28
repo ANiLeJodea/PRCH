@@ -182,7 +182,9 @@ def check_proxy_list_from_document(
     chat_id, telegram_raw_file_path: str, portion: int, condition: bool
 ):
     try:
+        bot.send_message(chat_id, f"here you")
         raw_file_path = all_data.data['raw_file_name'] + '.txt'
+        bot.send_message(chat_id, f"opening file with {raw_file_path}, {portion}, {condition}")
         with open(raw_file_path, 'wb') as f:
             f.write(bot.download_file(telegram_raw_file_path))
 
@@ -201,7 +203,8 @@ def check_proxy_list_from_document(
             )
     except Exception as e:
         bot.send_message(
-            chat_id=chat_id,
+            chat_id=os.environ['LOG_FORUM_ID'],
+            message_thread_id=os.environ['LOG_TOPIC_ID'],
             text=exc_to_str(e, title="An exception occurred:\n\n"),
         )
 
