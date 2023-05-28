@@ -52,6 +52,9 @@ def handle_info(m: Message):
         disable_web_page_preview=True
     )
 
+@bot.message_handler(commands=['get'])
+def handle_general_get(m: Message):
+    bot.send_message(m.chat.id, all_data.data[m.text[5:]])
 
 def define_handlers_of_dynamic_commands():
 
@@ -161,7 +164,7 @@ def handle_check_proxy_list_from_document(m: Message):
                 portion = all_data.data['portion']
         bot.edit_message_text(
             chat_id=m.chat.id, message_id=answer_message_id,
-            text=f"Handled that the type of this file is txt {raw_file_type} and that the arguments are "
+            text=f"Handled that the type of this file is {raw_file_type} and that the arguments are "
                  f"{arguments}\nPortion = {portion}"
         )
         thread = threading.Thread(
@@ -176,7 +179,7 @@ def handle_check_proxy_list_from_document(m: Message):
         )
 
 def check_proxy_list_from_document(
-    chat_id: str, telegram_raw_file_path: str, portion: int, condition: bool
+    chat_id, telegram_raw_file_path: str, portion: int, condition: bool
 ):
     try:
         raw_file_path = all_data.data['raw_file_name'] + '.txt'
