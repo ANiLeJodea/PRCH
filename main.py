@@ -14,7 +14,7 @@ from setup import all_data as all_data_now, bot
 from verify import check_proxies_from_document, \
     verify_proxy_on_site_list, verify_proxy_on_ipinfo_w_time_time
 from data import AllData
-from helpers import exc_to_str
+# from helpers import exc_to_str
 
 all_data = all_data_now
 
@@ -41,7 +41,7 @@ def handle_info(m: Message):
     try:
         message_id_to_answer = bot.send_document(
             m.chat.id, open(f"{all_data.data['checked_file_name']}.txt", 'rb')).message_id
-        answer_text += f"Last {all_data.data['checked_file_name']}:"
+        answer_text = f"Last {all_data.data['checked_file_name']} ⏫\n" + answer_text
     except FileNotFoundError:
         answer_text += "Seems like there is no checked file on server yet. Try to make it"
     bot.enc_send_message(
@@ -52,9 +52,10 @@ def handle_info(m: Message):
         disable_web_page_preview=True
     )
 
-@bot.message_handler(commands=['get'])
-def handle_general_get(m: Message):
-    bot.send_message(m.chat.id, all_data.data[m.text[5:]])
+# @bot.message_handler(commands=['get'])
+# def handle_general_get(m: Message):
+#     d = all_data.data.get(m.text[5:])
+#     bot.send_message(m.chat.id, f"{d}\n{type(d)}")
 
 def define_handlers_of_dynamic_commands():
 
@@ -151,10 +152,10 @@ def handle_check_proxy_list_from_document(m: Message):
         else:
             try:
                 portion = int(arguments[0])
-            except Exception as e:
+            except ValueError:
                 bot.edit_message_text(
                     chat_id=m.chat.id, message_id=answer_message_id,
-                    text=f"{exc_to_str(e)}\n\nThe caption of this message is not 'no' and I was not able to convert"
+                    text=f"\n\nThe caption of this message is not 'no' and I was not able to convert"
                          f" it to an integer.\nGoing to use the default value {all_data.data['portion']}"
                 )
                 portion = all_data.data['portion']
@@ -172,31 +173,22 @@ def handle_check_proxy_list_from_document(m: Message):
 def check_proxy_list_from_document(
     chat_id, telegram_raw_file_path: str, portion: int, not_desired: bool
 ):
-    try:
-        raw_file_path = all_data.data['raw_file_name'] + '.txt'
-        # bot.send_message(chat_id, f"opening file with {raw_file_path}, {portion}, {not_desired}")
-        with open(raw_file_path, 'wb') as f:
-            f.write(bot.download_file(telegram_raw_file_path))
-
-        # bot.send_message(chat_id, f"Calling check_proxies_from_document()...")
-        result = check_proxies_from_document(
-            all_data.data['checked_file_name'], raw_file_path, all_data.data['timeout'], portion, not_desired
+    raw_file_path = all_data.data['raw_file_name'] + '.txt'
+    with open(raw_file_path, 'wb') as f:
+        f.write(bot.download_file(telegram_raw_file_path))
+    result = check_proxies_from_document(
+        all_data.data['checked_file_name'], raw_file_path, all_data.data['timeout'], portion, not_desired
+    )
+    if result[0]:
+        bot.send_document(
+            chat_id=chat_id,
+            document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
+            visible_file_name=result[1]
         )
-        if result[0]:
-            bot.send_document(
-                chat_id=chat_id,
-                document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
-                visible_file_name=result[1]
-            )
-        else:
-            bot.send_message(
-                chat_id=chat_id,
-                text=result[1]
-            )
-    except Exception as e:
+    else:
         bot.send_message(
             chat_id=chat_id,
-            text=exc_to_str(e, title="An exception occurred:\n\n"),
+            text=result[1]
         )
 
 if __name__ == "__main__":
