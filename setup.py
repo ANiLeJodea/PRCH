@@ -30,6 +30,32 @@ class EncTeleBot(TeleBot):
             time.sleep(2)
         return to_return
 
+    def enc_edit_message_text(
+            self, text: str, chat_id, message_id: int = None,
+            inline_message_id: str = None,
+            parse_mode: str = None, entities: list[types.MessageEntity] = None,
+            disable_web_page_preview: bool = None,
+            reply_markup: types.InlineKeyboardMarkup = None,
+            reply_to_message_id: int = None, timeout: int = None, message_thread_id: int = None
+    ) -> list:
+        to_return = []
+        ts = util.smart_split(text=text)
+
+        self.edit_message_text(
+            chat_id=chat_id, text=ts.pop(0), message_id=message_id, parse_mode=parse_mode,
+            inline_message_id=inline_message_id, entities=entities, disable_web_page_preview=disable_web_page_preview,
+            reply_markup=reply_markup
+        )
+        time.sleep(1)
+        for t in ts:
+            to_return.append(self.send_message(
+                chat_id=chat_id, text=t, parse_mode=parse_mode, disable_web_page_preview=disable_web_page_preview,
+                reply_to_message_id=reply_to_message_id, timeout=timeout, message_thread_id=message_thread_id
+            ))
+            time.sleep(2)
+
+        return to_return
+
 bot = EncTeleBot(token=environ["BOT_TOKEN"])
 all_data = AllData()
 

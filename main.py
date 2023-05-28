@@ -34,7 +34,7 @@ def handle_request():
 def handle_info(m: Message):
     answer_text = all_data.data_str + \
                   f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nSTARTED_TIME : {os.environ['STARTED_TIME']}\n\n" \
-                  f"Time went from program start : {time.time() - float(os.environ['STARTED_TIME_INT'])}\n\n"
+                  f"Time went from program start : {round(time.time() - float(os.environ['STARTED_TIME_INT']), 4)}\n\n"
     message_id_to_answer = m.message_id
 
     try:
@@ -96,7 +96,7 @@ def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_data):
     else:
         text = "Please, provide something to check in the correct format."
 
-    bot.edit_message_text(
+    bot.enc_edit_message_text(
         text=text,
         chat_id=chat_id,
         message_id=id_of_message_to_change
@@ -118,7 +118,7 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
     else:
         text = "Please, provide something to check in the correct format."
 
-    bot.edit_message_text(
+    bot.enc_edit_message_text(
         text=text,
         chat_id=chat_id,
         message_id=id_of_message_to_change,

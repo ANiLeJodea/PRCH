@@ -70,7 +70,7 @@ def verify_proxy_on_site_list(
                 test_results[site] = (True, f"Fully worked;Time taken: {time_taken}")
             else:
                 test_results[site] = (False, f"Didnt work;Invalid r.status_code: {r.status_code}\n"
-                                             f"r.text: {r.text}\nTime taken: {time_taken}")
+                                      "\nTime taken: {time_taken}")
         except Exception as e:
             test_results[site] = (False, exc_to_str(e))
 
