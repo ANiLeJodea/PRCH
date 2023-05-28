@@ -185,7 +185,7 @@ def check_proxy_list_from_document(
         bot.send_document(
             chat_id=chat_id,
             document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
-            visible_file_name=result
+            visible_file_name=result[0]
         )
 
 if __name__ == "__main__":

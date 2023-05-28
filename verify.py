@@ -26,7 +26,7 @@ def verify_proxy_on_ipinfo(
             return False, f"Worked;Didnt show a pr ip\nthis_ip: {os.environ['THIS_IP']}" \
                           f"\nr.text: {r.text}\nTime taken: {time_taken}", proxy_data
         return False, \
-               f"Didnt work;Invalid r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken: {time_taken}", \
+               f"Didnt work;Invalid r.status_code: {r.status_code}\nTime taken: {time_taken}", \
                proxy_data
 
     except Exception as e:
@@ -48,7 +48,7 @@ def verify_proxy_on_ipinfo_w_time_time(
             return False, f"Worked;Didnt show a pr ip\nthis_ip: {os.environ['THIS_IP']}" \
                           f"\nr.text: {r.text}\nTime taken t: {time_taken_t}\nTime taken r: {time_taken_r}", proxy_data
         return False, \
-               f"Didnt work;Invalid r.status_code: {r.status_code}\nr.text: {r.text}\nTime taken t: {time_taken_t}\nTime taken r: {time_taken_r}", \
+               f"Didnt work;Invalid r.status_code: {r.status_code}\nTime taken t: {time_taken_t}\nTime taken r: {time_taken_r}", \
                proxy_data
 
     except Exception as e:
@@ -70,7 +70,7 @@ def verify_proxy_on_site_list(
                 test_results[site] = (True, f"Fully worked;Time taken: {time_taken}")
             else:
                 test_results[site] = (False, f"Didnt work;Invalid r.status_code: {r.status_code}\n"
-                                      "\nTime taken: {time_taken}")
+                                      f"\nTime taken: {time_taken}")
         except Exception as e:
             test_results[site] = (False, exc_to_str(e))
 
@@ -80,7 +80,7 @@ def verify_proxy_on_site_list(
 
 def check_proxies_from_document(
         raw_file_path: str, portion: int = 100, condition: bool = None
-):
+) -> tuple:
     name_with_date = data['checked_file_name'] + f"_{time.strftime('%H:%M:%S %d/%m/%Y')}.txt"
     try:
         with open(raw_file_path, 'r') as fr, \
@@ -97,6 +97,6 @@ def check_proxies_from_document(
                                      executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())))
     except Exception as e:
         return e, name_with_date
-    return name_with_date
+    return name_with_date,
 
 
