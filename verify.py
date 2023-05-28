@@ -81,7 +81,7 @@ def check_proxies_from_document(
         checked_file_name: str, raw_file_path: str, timeout: float, portion: int = 100, not_desired: bool = None
 ) -> tuple[bool, str]:
     try:
-        path_with_date = f"{checked_file_name}_{time.strftime('%H:%M:%S %d/%m/%Y')}.txt"
+        path_with_date = f"{checked_file_name}_{time.strftime('%H:%M:%S %d-%m-%Y')}.txt"
         with open(raw_file_path, 'r') as fr, \
                 open(checked_file_name + ".txt", 'w') as fw, \
                 ThreadPoolExecutor(max_workers=portion) as executor:

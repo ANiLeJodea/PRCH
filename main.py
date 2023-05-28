@@ -2,6 +2,7 @@
 import os
 import threading
 import time
+# import argparse
 
 # External packages
 import telebot
@@ -108,6 +109,10 @@ def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_data):
     )
 
 def perform_site_list_check(chat_id, id_of_message_to_change, args):
+
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument(all_data.data['site_list_argument'])  # -sites
+
     args_list: list = args.split(':')
     args_list_len: int = len(args_list)
     if 1 < args_list_len < 4:
