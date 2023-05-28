@@ -80,7 +80,7 @@ def verify_proxy_on_site_list(
 
 def check_proxies_from_document(
         raw_file_path: str, portion: int = 100, condition: bool = None
-) -> str:
+) -> tuple[bool, str]:
     try:
         name_with_date = f"{data['checked_file_name']}_{time.strftime('%H:%M:%S %d/%m/%Y')}.txt"
         with open(raw_file_path, 'r') as fr, \
@@ -96,7 +96,7 @@ def check_proxies_from_document(
                                      for bool_result, text, proxy in
                                      executor.map(verify_proxy_on_ipinfo_w_time_time, fr.read().splitlines())))
     except Exception as e:
-        return exc_to_str(e)
-    return name_with_date
+        return False, exc_to_str(e)
+    return True, name_with_date
 
 

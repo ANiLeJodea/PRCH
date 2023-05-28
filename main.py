@@ -180,22 +180,16 @@ def check_proxy_list_from_document(
             f.write(bot.download_file(telegram_raw_file_path))
 
         result = check_proxies_from_document(raw_file_path, portion, condition)
-        if len(result) == 2:
-            bot.enc_send_message(
-                chat_id=chat_id,
-                text=exc_to_str(result[0], title="An error occurred (Failed to verify all. Going to try to send "
-                                                 "the broken file):\n\n")
-            )
+        if result[0]:
             bot.send_document(
                 chat_id=chat_id,
                 document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
-                visible_file_name=f"Crashed {result[1]}"
+                visible_file_name=result[1]
             )
         else:
-            bot.send_document(
+            bot.send_message(
                 chat_id=chat_id,
-                document=open(all_data.data['checked_file_name'] + ".txt", 'rb'),
-                visible_file_name=result[0]
+                text=result[1]
             )
     except Exception as e:
         bot.send_message(
