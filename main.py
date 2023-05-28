@@ -34,7 +34,7 @@ def handle_request():
 def handle_info(m: Message):
     answer_text = all_data.data_str + \
                   f"\n\nTHIS_IP : {os.environ['THIS_IP']}\n\nSTARTED_TIME : {os.environ['TIME_STARTED']}\n\n" \
-                  f"Time went from program start : {round(time.time() - float(os.environ['TIME_STARTED_INT']), 4)}\n\n"
+                  f"Secs have passed from program start : {round(time.time() - float(os.environ['TIME_STARTED_INT']), 4)}\n\n"
     message_id_to_answer = m.message_id
 
     try:
