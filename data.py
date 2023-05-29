@@ -24,7 +24,7 @@ class AllData:
         self.data: dict = self.get_data()
         self.data_str: str = self.data_to_str()
 
-    def get_data(self, include_last_kwargs: bool = False) -> dict:
+    def get_data(self) -> dict:
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor()
         cur.execute("""SELECT * FROM main_data""")
