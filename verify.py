@@ -28,19 +28,19 @@ def verify_proxy_on_ipinfo(
         return False, f"Didnt work;{exc_to_str(e)}", proxy_data
 
 def verify_proxy_on_site_list(
-        proxy_ip: str, proxy_port: str, timeout: float, site_list: list, delay_between: int = 0
+        proxy_ip_port: str, timeout: float, site_list: list, delay_between: int = 0
 ) -> dict:
     test_results = {}
-    proxy_ip_port = f"{proxy_ip}:{proxy_port}"
+    proxies_data = {"http": proxy_ip_port, "https": proxy_ip_port}
     for site in site_list:
         try:
-            r = requests.get(site, proxies={"http": proxy_ip_port, "https": proxy_ip_port}, timeout=timeout)
+            r = requests.get(site, proxies=proxies_data, timeout=timeout)
             time_taken = round(r.elapsed.total_seconds(), 4)
             if r.status_code == 200:
                 test_results[site] = (True, f"Fully worked;Time taken: {time_taken}")
             else:
                 test_results[site] = (False, f"Didnt work;Invalid r.status_code: {r.status_code}\n"
-                                      f"\nTime taken: {time_taken}")
+                                      f"Time taken: {time_taken}")
         except Exception as e:
             test_results[site] = (False, exc_to_str(e))
 

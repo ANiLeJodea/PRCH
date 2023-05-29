@@ -14,8 +14,13 @@ from setup import all_data as all_data_now, bot
 from verify import check_proxies_from_document, \
     verify_proxy_on_site_list, verify_proxy_on_ipinfo
 from data import AllData
+from helpers import exc_to_str
 
 all_data = all_data_now
+
+# site_list_command_parser = argparse.ArgumentParser()
+# site_list_command_parser.add_argument(all_data.data['site_list_argument'])  # -sites
+# parser.add_argument(all_data.data[''])  # -
 
 app = Flask(__name__)
 
@@ -90,39 +95,32 @@ def define_handlers_of_dynamic_commands():
         thread.start()
 
 def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_data):
-    if ':' in proxy_data:
-        text = verify_proxy_on_ipinfo(proxy_data, timeout=all_data.data['timeout'])[1]
-    else:
-        text = "Please, provide something to check in the correct format."
-
     bot.enc_edit_message_text(
-        text=text,
+        text=verify_proxy_on_ipinfo(proxy_data, timeout=all_data.data['timeout'])[1],
         chat_id=chat_id,
         message_id=id_of_message_to_change
     )
 
+
 def perform_site_list_check(chat_id, id_of_message_to_change, args):
-
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument(all_data.data['site_list_argument'])  # -sites
-
-    args_list: list = args.split(':')
-    args_list_len: int = len(args_list)
-    if 1 < args_list_len < 4:
+    try:
+        args_list: list = args.split(' ')
         text = "Results:\n"
-        if args_list_len == 2:
-            proxy_ip, proxy_port = args_list
-            sites_list = all_data.data['default_site_list_to_check']
-        elif args_list_len == 3:
-            proxy_ip, proxy_port, sites = args_list
+        proxy_ip_port = args_list.pop(0)
+        parsed_arguments = {a[1:]: args_list[i+1] for i, a in enumerate(args_list[:-1]) if i % 2 == 0 and a[0] == '-'}
+        if sites := parsed_arguments.get(all_data.data['site_list_argument']):
             sites_list = [f'https://{s}' for s in sites.split(',')]
+        else:
+            sites_list = all_data.data['default_site_list_to_check']
         for site_name, result in verify_proxy_on_site_list(
-                proxy_ip, proxy_port, all_data.data['timeout'],
+                proxy_ip_port, all_data.data['timeout'],
                 sites_list, all_data.data['delay_between']
         ).items():
             text += f"Site {site_name}::\n{result[1]}\n\n"
-    else:
-        text = "Please, provide something to check in the correct format."
+    except Exception as e:
+        text = "{}\n\nPlease, provide something to check in the correct format.".format(
+            exc_to_str(e, title='An exception occurred:\n\n')
+        )
 
     bot.enc_edit_message_text(
         text=text,
@@ -141,22 +139,29 @@ def handle_check_proxy_list_from_document(m: Message):
     raw_file = bot.get_file(m.document.file_id)
     raw_file_type = raw_file.file_path.split('.')[-1]
     if raw_file_type == 'txt':
-        arguments = str(m.caption).split(';')
         filter_condition = None
-        if len(arguments) == 2:
-            filter_condition = not bool(arguments[1])
-        if arguments[0].lower() == "no":
-            portion = None
-        else:
-            try:
-                portion = int(arguments[0])
-            except ValueError:
-                bot.edit_message_text(
-                    chat_id=m.chat.id, message_id=answer_message_id,
-                    text=f"\n\nThe caption of this message is not 'no' and I was not able to convert"
-                         f" it to an integer.\nGoing to use the default value {all_data.data['portion']}"
-                )
-                portion = all_data.data['portion']
+        portion = all_data.data['portion']
+        answer_text = ""
+        if m.caption:
+            args_list = m.caption.split(' ')
+            parsed_arguments = {a[1:]: args_list[i + 1] for i, a in enumerate(args_list[:-1]) if
+                                i % 2 == 0 and a[0] == '-'}
+            if portion := parsed_arguments.get(all_data.data['portion_argument']):
+                try:
+                    portion = int(portion)
+                except ValueError:
+                    answer_text += "Was not able to convert the portion argument to an integer.\n" \
+                                   f"Going to use the value : {portion}\n\n"
+            if filter_condition := parsed_arguments.get(all_data.data['filter_condition_argument']):
+                try:
+                    filter_condition = not bool(int(filter_condition))
+                except ValueError:
+                    answer_text += "Was not able to convert the filter_condition argument to an integer.\n" \
+                                   f"Going to use the value : {filter_condition}\n\n"
+        bot.edit_message_text(
+            chat_id=m.chat.id, message_id=answer_message_id,
+            text=answer_text + f"Using those values:\nportion : {portion}\nfilter_condition : {filter_condition}"
+        )
         thread = threading.Thread(
             target=check_proxy_list_from_document,
             args=(m.chat.id, raw_file.file_path, portion, filter_condition)
@@ -189,8 +194,11 @@ def check_proxy_list_from_document(
             text=result[1]
         )
 
-if __name__ == "__main__":
+def main():
     define_handlers_of_dynamic_commands()
     app.run("0.0.0.0", port=os.getenv("PORT", 3000))
+
+if __name__ == "__main__":
+    main()
 
 
