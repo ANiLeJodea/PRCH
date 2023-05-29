@@ -1,7 +1,6 @@
 # Python default packages
 import traceback
 
-
 def exc_to_str(
         exc: Exception, title: str = "EXCEPTION:\n\n",
         limit: int = 2, separator: str = "", chain: bool = False
