@@ -28,8 +28,7 @@ app = Flask(__name__)
 def handle_request():
     if request.headers.get('content-type') == "application/json":
         update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
-        m: Message = update.message
-        if str(m.from_user.id) in all_data.data['admins']:
+        if update.message and str(update.message.from_user.id) in all_data.data['admins']:
             bot.process_new_updates([update])
     return "OK"
 
