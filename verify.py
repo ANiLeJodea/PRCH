@@ -20,8 +20,8 @@ def verify_proxy_on_ipinfo(
         if r.status_code == 200:
             if r.text in proxy_data:
                 return True, f"Fully worked;Time taken: {time_taken};Showed a p ip: {r.text}", proxy_data
-            return False, f"Worked;Time taken: {time_taken};Didnt show a p ip. THIS_IP: {os.environ['THIS_IP']}\n" \
-                          f"r.text: {r.text}", proxy_data
+            return False, f"Worked;Time taken: {time_taken}\nr.text: {r.text};Didnt show a p ip. " \
+                          f"THIS_IP: {os.environ['THIS_IP']}\n", proxy_data
         return False, f"Didnt work;Time taken: {time_taken};Invalid r.status_code: {r.status_code}", proxy_data
 
     except Exception as e:
@@ -53,7 +53,7 @@ def check_proxies_from_document(
         portion: int = 100, not_desired: bool = None
 ) -> tuple[bool, str]:
     try:
-        path_with_date = f"{checked_file_name}_{time.strftime('%H:%M:%S %d-%m-%Y')}.txt"
+        path_with_date = f"{checked_file_name} {time.strftime('%H:%M:%S %d-%m-%Y')}.txt"
         with open(raw_file_path, 'r') as fr, \
                 open(checked_file_name + ".txt", 'w') as fw, \
                 ThreadPoolExecutor(max_workers=portion) as executor:

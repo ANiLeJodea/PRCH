@@ -69,6 +69,7 @@ def define_handlers_of_dynamic_commands():
 
         all_data = AllData(mode=m.text[(len(all_data.data['command_for_update_data'])+2):])
         bot.send_message(m.chat.id, f"Using {all_data.mode}. Updating by calling define()...")
+        modes[None] = all_data.data['mode']
         define_handlers_of_dynamic_commands()
 
     @bot.message_handler(commands=[all_data.data['command_for_ip_info']])

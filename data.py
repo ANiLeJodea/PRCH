@@ -27,7 +27,7 @@ class AllData:
     def get_data(self) -> dict:
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor()
-        cur.execute("""SELECT * FROM main_data""")
+        cur.execute("SELECT * FROM main_data")
         all_data = {}
         for key, value, type_v in cur.fetchall():
             if type_v == 'int':
@@ -36,7 +36,7 @@ class AllData:
                 all_data[key] = value.split('~')
             else:
                 all_data[key] = value
-        cur.execute("""SELECT value FROM admin_id""")
+        cur.execute("SELECT value FROM admin_id")
         all_data['admins'] = [d[0] for d in cur.fetchall()]
 
         global save_data
