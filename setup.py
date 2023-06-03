@@ -63,12 +63,13 @@ environ['LOG_FORUM_ID'], environ['LOG_TOPIC_ID'] = all_data.data['log_entity'].s
 environ['THIS_IP'] = requests.get('https://ipinfo.io/ip').text
 environ['TIME_STARTED_INT'] = str(time.time())
 environ['TIME_STARTED'] = time.strftime('%H:%M:%S %d/%m/%Y')
+external_url = environ["EXTERNAL_URL"]
 
 bot.send_message(
     chat_id=environ['LOG_FORUM_ID'],
     message_thread_id=environ['LOG_TOPIC_ID'],
     text="Tried to set a webhook with telebot.\nResponse: {}\nRunning on {}\nUsed {} mode to form data_str".format(
-        bot.set_webhook(environ['EXTERNAL_URL']),
+        bot.set_webhook(external_url),
         environ['THIS_IP'],
         all_data.mode
     )

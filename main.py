@@ -14,7 +14,7 @@ from setup import all_data as all_data_now, bot
 from verify import check_proxies_from_document, \
     verify_proxy_on_site_list, verify_proxy_on_ipinfo
 from data import AllData
-from helpers import exc_to_str
+from helpers import exc_to_str, form_an_output
 
 all_data = all_data_now
 
@@ -23,6 +23,9 @@ all_data = all_data_now
 # parser.add_argument(all_data.data[''])  # -
 
 app = Flask(__name__)
+
+# 1 - silent ; 2 - verbose ; 3 - expressive
+modes = {None: all_data.data['mode'], "silent": 1, "verbose": 2, "expressive": 3}
 
 @app.route('/', methods=["POST"])
 def handle_request():
@@ -71,37 +74,42 @@ def define_handlers_of_dynamic_commands():
     @bot.message_handler(commands=[all_data.data['command_for_ip_info']])
     def handle_ip_info_check(m: Message):
         proxy = m.text[len(all_data.data['command_for_ip_info']) + 2:]
-        answer_message_id = bot.send_message(m.chat.id, f"Trying to verify {proxy}...").message_id
+        answer_message_id = bot.send_message(m.chat.id, "Doing...").message_id
         thread = threading.Thread(
             target=perform_ip_info_check, args=(
                 m.chat.id,
                 answer_message_id,
-                proxy
+                proxy,
+                modes[None]
             )
         )
         thread.start()
 
     @bot.message_handler(commands=[all_data.data['command_for_site_list']])
     def handle_site_list_check(m: Message):
-        answer_message_id = bot.send_message(m.chat.id, "Trying to verify on a site list...").message_id
+        answer_message_id = bot.send_message(m.chat.id, "Doing on a site list...").message_id
         thread = threading.Thread(
             target=perform_site_list_check, args=(
                 m.chat.id,
                 answer_message_id,
-                m.text[len(all_data.data['command_for_site_list']) + 2:]
+                m.text[len(all_data.data['command_for_site_list']) + 2:],
+                modes[None]
             )
         )
         thread.start()
 
-def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_data):
+def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_data, mode: int):
     bot.enc_edit_message_text(
-        text=verify_proxy_on_ipinfo(proxy_data, timeout=all_data.data['timeout'])[1],
+        text=form_an_output(
+            verify_proxy_on_ipinfo(proxy_data, timeout=all_data.data['timeout'])[1],
+            mode
+        ),
         chat_id=chat_id,
         message_id=id_of_message_to_change
     )
 
 
-def perform_site_list_check(chat_id, id_of_message_to_change, args):
+def perform_site_list_check(chat_id, id_of_message_to_change, args, mode: int):
     try:
         args_list: list = args.split(' ')
         text = "Results:\n"
@@ -115,7 +123,7 @@ def perform_site_list_check(chat_id, id_of_message_to_change, args):
                 proxy_ip_port, all_data.data['timeout'],
                 sites_list, all_data.data['delay_between']
         ).items():
-            text += f"Site {site_name}::\n{result[1]}\n\n"
+            text += f"Site {site_name}::\n{form_an_output(result[1], mode)}\n\n"
     except Exception as e:
         text = "{}\n\nPlease, provide something to check in the correct format.".format(
             exc_to_str(e, title='An exception occurred:\n\n')
@@ -138,7 +146,7 @@ def handle_check_proxy_list_from_document(m: Message):
     raw_file = bot.get_file(m.document.file_id)
     raw_file_type = raw_file.file_path.split('.')[-1]
     if raw_file_type == 'txt':
-        filter_condition = None
+        filter_condition = mode = None
         portion = all_data.data['portion']
         answer_text = ""
         if m.caption:
@@ -151,19 +159,26 @@ def handle_check_proxy_list_from_document(m: Message):
                 except ValueError:
                     answer_text += "Was not able to convert the portion argument to an integer.\n" \
                                    f"Going to use the value : {portion}\n\n"
+
             if filter_condition := parsed_arguments.get(all_data.data['filter_condition_argument']):
                 try:
                     filter_condition = not bool(int(filter_condition))
                 except ValueError:
                     answer_text += "Was not able to convert the filter_condition argument to an integer.\n" \
                                    f"Going to use the value : {filter_condition}\n\n"
+
+            mode = parsed_arguments.get(all_data.data['mode_argument'])
+
+        mode = modes[mode] if mode in modes else 1
+
         bot.edit_message_text(
             chat_id=m.chat.id, message_id=answer_message_id,
-            text=answer_text + f"Using those values:\nportion : {portion}\nfilter_condition : {filter_condition}"
+            text=answer_text + f"Using those values:\nportion : {portion}\n"
+                               f"not_desired : {filter_condition}\nmode: {mode}"
         )
         thread = threading.Thread(
             target=check_proxy_list_from_document,
-            args=(m.chat.id, raw_file.file_path, portion, filter_condition)
+            args=(m.chat.id, raw_file.file_path, portion, filter_condition, mode)
         )
         thread.start()
     else:
@@ -173,13 +188,13 @@ def handle_check_proxy_list_from_document(m: Message):
         )
 
 def check_proxy_list_from_document(
-    chat_id, telegram_raw_file_path: str, portion: int, not_desired: bool
+    chat_id, telegram_raw_file_path: str, portion: int, not_desired: bool, mode: int
 ):
     raw_file_path = all_data.data['raw_file_name'] + '.txt'
     with open(raw_file_path, 'wb') as f:
         f.write(bot.download_file(telegram_raw_file_path))
     result = check_proxies_from_document(
-        all_data.data['checked_file_name'], raw_file_path, all_data.data['timeout'], portion, not_desired
+        all_data.data['checked_file_name'], raw_file_path, all_data.data['timeout'], mode, portion, not_desired
     )
     if result[0]:
         bot.send_document(

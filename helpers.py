@@ -5,11 +5,16 @@ def exc_to_str(
         exc: Exception, title: str = "EXCEPTION:\n\n",
         limit: int = 2, separator: str = "", chain: bool = False
 ) -> str:
-    if title is None:
-        title = ""
-    return title + separator.join(traceback.format_exception(
-        type(exc), exc, exc.__traceback__,
-        limit=limit, chain=chain))
+    return title + separator.join(
+        traceback.format_exception(
+            type(exc), exc, exc.__traceback__,
+            limit=limit, chain=chain
+        ))
+
+def form_an_output(
+        raw_output: str, num_parts: int, separator: str = '\n', split_by: str = ';'
+):
+    return separator.join(t for t in raw_output.split(split_by)[:num_parts] if t)
 
 def prettify(arg, dec_start: str = '<strong>', dec_end: str = '</strong>', number_to_show: int = 3):
     t = type(arg)
