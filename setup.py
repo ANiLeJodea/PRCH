@@ -30,7 +30,7 @@ class EncTeleBot(TeleBot):
             time.sleep(2)
         return to_return
 
-    def enc_edit_message_text(
+    def enc_edit_message_ext(
             self, text: str, chat_id, message_id: int = None,
             inline_message_id: str = None,
             parse_mode: str = None, entities: list[types.MessageEntity] = None,
