@@ -56,7 +56,7 @@ class EncTeleBot(TeleBot):
 
         return to_return
 
-bot = EncTeleBot(token=environ["BOT_TOKEN"], skip_pending=False)
+bot = EncTeleBot(token=environ["BOT_TOKEN"], skip_pending=True)
 all_data = AllData()
 
 environ['LOG_FORUM_ID'], environ['LOG_TOPIC_ID'] = all_data.data['log_entity'].split(" ")
