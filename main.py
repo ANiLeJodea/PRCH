@@ -60,7 +60,7 @@ def handle_info(m: types.Message):
 
 def define_handlers_of_dynamic_commands():
 
-    @bot.message_handler(commands=db['main_data']['command_for_update_data'])
+    @bot.message_handler(commands=[db['main_data']['command_for_update_data']])
     def handle_update_data(m: types.Message):
         modes[None] = db['main_data']['mode']
         bot.send_message(m.chat.id, f"Updating by calling define_handlers_of_dynamic_commands()...")
