@@ -1,15 +1,8 @@
 # Python default packages
 import time
-from os import environ
 
 # External packages
-import requests
-from telebot import TeleBot
-from telebot import types
-from telebot import util
-
-# Project packages
-from data import AllData
+from telebot import TeleBot, types, util
 
 class EncTeleBot(TeleBot):
 
@@ -40,7 +33,7 @@ class EncTeleBot(TeleBot):
             reply_to_message_id: int = None, timeout: int = None, message_thread_id: int = None,
             delay_between_acting: float = 2
     ) -> list:
-        to_return = []
+        messages = []
         text_parts = util.smart_split(text=text)
 
         self.edit_message_text(
@@ -50,30 +43,12 @@ class EncTeleBot(TeleBot):
         )
         time.sleep(delay_between_acting)
         for t in text_parts:
-            to_return.append(self.send_message(
+            messages.append(self.send_message(
                 chat_id=chat_id, text=t, parse_mode=parse_mode, disable_web_page_preview=disable_web_page_preview,
                 reply_to_message_id=reply_to_message_id, timeout=timeout, message_thread_id=message_thread_id
             ))
             time.sleep(delay_between_acting)
 
-        return to_return
+        return messages
 
-bot = EncTeleBot(token=environ["BOT_TOKEN"], skip_pending=True)
-all_data = AllData()
-
-environ['LOG_FORUM_ID'], environ['LOG_TOPIC_ID'] = all_data.data['log_entity'].split(" ")
-environ['THIS_IP'] = requests.get('https://ipinfo.io/ip').text
-environ['TIME_STARTED_INT'] = str(time.time())
-environ['TIME_STARTED'] = time.strftime('%H:%M:%S %d-%m-%Y')
-external_url = environ["EXTERNAL_URL"]
-
-bot.send_message(
-    chat_id=environ['LOG_FORUM_ID'],
-    message_thread_id=environ['LOG_TOPIC_ID'],
-    text="Tried to set a webhook with telebot.\nResponse: {}\nRunning on {}\nUsed {} mode to form data_str".format(
-        bot.set_webhook(external_url),
-        environ['THIS_IP'],
-        all_data.mode
-    )
-)
 

@@ -26,6 +26,18 @@ def prettify(arg, dec_start: str = '<strong>', dec_end: str = '</strong>', numbe
         return f'''{number_to_show} first:\n{str(t).split("'")[1]} : ''' + ' ; '.join(
             f"""{dec_start}{k}{dec_end} : {dec_start}{v}{dec_end} ({str(type(v)).split("'")[1]})"""
             for k, v in arg.items()[:number_to_show])
-    else:
-        return f"{dec_start}{arg}{dec_end}"
 
+    return f"{dec_start}{arg}{dec_end}"
+
+def data_to_str(
+        data: dict, mode: str = 'html', separator: str = """
+
+"""
+):
+    mode = mode if mode in ['html', 'markdown'] else 'html'
+    dec_text_start, dec_text_end = ('<strong>', '</strong>') if mode == 'html' else ('**', '**')
+    return "ALL DATA:\n\n" + \
+        separator.join(
+            "{}{}{} :: {}".format(dec_text_start, key, dec_text_end, prettify(data, dec_text_start, dec_text_end))
+            for key, data in data.items()
+        )
