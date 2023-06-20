@@ -1,4 +1,4 @@
 requests~=2.31.0
 Flask~=2.3.2
 pytelegrambotapi~=4.10.0
-psycopg2~=2.9.5
+replit~=3.2.5
