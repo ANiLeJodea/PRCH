@@ -64,7 +64,7 @@ all_data = AllData()
 environ['LOG_FORUM_ID'], environ['LOG_TOPIC_ID'] = all_data.data['log_entity'].split(" ")
 environ['THIS_IP'] = requests.get('https://ipinfo.io/ip').text
 environ['TIME_STARTED_INT'] = str(time.time())
-environ['TIME_STARTED'] = time.strftime('%H:%M:%S %d/%m/%Y')
+environ['TIME_STARTED'] = time.strftime('%H:%M:%S %d-%m-%Y')
 external_url = environ["EXTERNAL_URL"]
 
 bot.send_message(
