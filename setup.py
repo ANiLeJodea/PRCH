@@ -1,7 +1,7 @@
 # Python default packages
 import time
 from os import environ
-# test ada
+
 # External packages
 import requests
 from telebot import TeleBot

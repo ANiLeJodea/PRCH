@@ -113,18 +113,17 @@ def perform_ip_info_check(chat_id, id_of_message_to_change, proxy_data, mode: in
 def perform_site_list_check(chat_id, id_of_message_to_change, args, mode: int):
     try:
         args_list: list = args.split(' ')
-        text = "Results:\n"
         proxy_ip_port = args_list.pop(0)
         parsed_arguments = {a[1:]: args_list[i+1] for i, a in enumerate(args_list[:-1]) if i % 2 == 0 and a[0] == '-'}
         if sites := parsed_arguments.get(all_data.data['site_list_argument']):
             sites_list = [f'https://{s}' for s in sites.split(',')]
         else:
             sites_list = all_data.data['default_site_list_to_check']
-        for site_name, result in verify_proxy_on_site_list(
-                proxy_ip_port, all_data.data['timeout'],
-                sites_list, all_data.data['delay_between']
-        ).items():
-            text += f"Site {site_name}::\n{form_an_output(result[1], mode)}\n\n"
+        text = "Results:\n" + '\n\n'.join(f"Site {site_name}::\n{form_an_output(result[1], mode)}"
+                                          for site_name, result in verify_proxy_on_site_list(
+            proxy_ip_port, all_data.data['timeout'],
+            sites_list, all_data.data['delay_between']
+        ).items())
     except Exception as e:
         text = "{}\n\nPlease, provide something to check in the correct format.".format(
             exc_to_str(e, title='An exception occurred:\n\n')
