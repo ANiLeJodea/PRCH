@@ -10,11 +10,22 @@ class EncTeleBot(TeleBot):
             self, chat_id, text: str,
             parse_mode: str = 'html',
             disable_web_page_preview: bool = True,
-            reply_to_message_id: int = None,
-            timeout: int = None,
-            message_thread_id: int | str = None,
+            reply_to_message_id = None,
+            timeout = None,
+            message_thread_id = None,
             delay_between_sending: float = 2
     ) -> list[types.Message]:
+        """
+        :param message_thread_id: int | str
+        :param chat_id: int | str
+        :param text: str
+        :param parse_mode: str | None
+        :param disable_web_page_preview: bool
+        :param reply_to_message_id: int
+        :param timeout: int
+        :param message_thread_id: int | str
+        :param delay_between_sending: float | int
+        """
         to_return = []
         for t in util.smart_split(text=text):
             to_return.append(self.send_message(
